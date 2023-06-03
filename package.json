@@ -8,7 +8,9 @@
     "start": "remix-serve build",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx .",
     "format": "prettier --write .",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "test:unit": "vitest",
+    "test:unit:ci": "vitest run"
   },
   "dependencies": {
     "@remix-run/css-bundle": "^1.16.1",
@@ -27,7 +29,8 @@
     "eslint": "^8.38.0",
     "eslint-config-prettier": "^8.8.0",
     "prettier": "^2.8.8",
-    "typescript": "^5.0.4"
+    "typescript": "^5.0.4",
+    "vitest": "^0.31.4"
   },
   "engines": {
     "node": ">=14"
