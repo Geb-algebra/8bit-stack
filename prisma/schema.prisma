@@ -10,8 +10,19 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model DeleteThisUser {
-    id    String @id @default(uuid())
-    email String @unique
-    name  String
+model User {
+    id   String @id @default(cuid())
+    name String @unique
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    password Password?
+}
+
+model Password {
+    hash String
+
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    userId String @unique
 }
