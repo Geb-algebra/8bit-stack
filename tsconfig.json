@@ -1,5 +1,6 @@
 {
   "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2019"],
     "isolatedModules": true,
@@ -16,6 +17,7 @@
       "~/*": ["./app/*"],
       "test/*": ["./test/*"]
     },
+    "skipLibCheck": true,
     "allowImportingTsExtensions": true,
 
     // Remix takes care of building everything in `remix build`.

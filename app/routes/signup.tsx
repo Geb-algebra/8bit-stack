@@ -1,6 +1,7 @@
 import type { ActionArgs, LoaderArgs, V2_MetaFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
-import { Form, Link, useLoaderData } from '@remix-run/react';
+import { useLoaderData } from '@remix-run/react';
+import AuthForm from '~/components/AuthForm';
 
 import { authenticator, getAuthErrorMessage } from '~/services/auth.server';
 
@@ -25,40 +26,18 @@ export const meta: V2_MetaFunction = () => {
 
 export default function LoginPage() {
   const loaderData = useLoaderData<typeof loader>();
-  const errorMessage = loaderData?.errorMessage;
 
   return (
-    <Form method="post">
-      <div>{errorMessage}</div>
-      <div>
-        <label htmlFor="username">Username</label>
-        <input
-          required
-          autoFocus={true}
-          name="username"
-          id="username"
-          type="text"
-          aria-invalid={errorMessage ? true : undefined}
-          aria-describedby="username-error"
+    <div className="flex min-h-full flex-col justify-center">
+      <div className="mx-auto w-full max-w-md px-8">
+        <AuthForm
+          submitButtonText="Sign Up"
+          errorMessage={loaderData.errorMessage}
+          bottomText="Already have an account?"
+          bottomLink={{ text: 'Log In', href: '/login' }}
+          requestFrom="signup"
         />
       </div>
-
-      <div>
-        <label htmlFor="password">Password</label>
-        <input
-          name="password"
-          id="password"
-          type="password"
-          autoComplete="current-password"
-          aria-invalid={errorMessage ? true : undefined}
-          aria-describedby="password-error"
-        />
-      </div>
-      <input type="hidden" name="requestFrom" value="signup" />
-      <button type="submit">Sign Up</button>
-      <div>
-        Already have an account? <Link to="/login">Log In</Link>
-      </div>
-    </Form>
+    </div>
   );
 }
