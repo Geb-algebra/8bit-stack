@@ -9,6 +9,14 @@ services:
       - 5555:5555
       - 8002:8002
     volumes:
-      - .:/code
-    working_dir: /code
+      - .:/8bit-stack
+    working_dir: /8bit-stack
     command: bash
+  validate:
+    image: mcr.microsoft.com/playwright:v1.35.0-jammy
+    environment:
+      - HOST=0.0.0.0
+    volumes:
+      - .:/8bit-stack
+    working_dir: /8bit-stack
+    command: npm run validate

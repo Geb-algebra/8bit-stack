@@ -15,4 +15,4 @@ minimum remix setup just for me.
 ### 1. Check the cloned stack works right
 
 1. run `docker compose run --rm --service-ports remix`, `npm run dev` and confirm you can access the app at `http://localhost:3000`
-2. stop the dev server and `npm run validate`. Confirm that all of lint, typecheck, vitest and cypress runs and succeeded.
+2. stop the container and run `docker compose run validate`. Confirm that all of lint, typecheck, vitest and cypress runs and succeeded.
