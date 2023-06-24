@@ -1,0 +1,12 @@
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'asia-northeast1-docker.pkg.dev/${PROJECT_ID}/remix-8bit-stack-230619/app', '.']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'asia-northeast1-docker.pkg.dev/${PROJECT_ID}/remix-8bit-stack-230619/app']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'asia-northeast1-docker.pkg.dev/${PROJECT_ID}/remix-8bit-stack-230619/litestream', './litestream']
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'asia-northeast1-docker.pkg.dev/${PROJECT_ID}/remix-8bit-stack-230619/litestream']
+  # - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk' 
+  #   entrypoint: gcloud
+  #   args: ['run', 'services', 'replace', 'service.yaml']

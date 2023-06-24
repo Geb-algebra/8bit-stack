@@ -1,0 +1,43 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: remix-8bit-stack-230619
+  labels:
+    cloud.googleapis.com/location: asia-northeast1
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: '0'
+        autoscaling.knative.dev/maxScale: '1'
+        run.googleapis.com/execution-environment: gen1 #or gen2
+        run.googleapis.com/container-dependencies: '{"litestream":["app"]}'
+    spec:
+      containers:
+        # replace uppercase variables with values from your environment
+        - image: asia-northeast1-docker.pkg.dev/PROJECT_ID/ARTIFACT_REGISTRY_REPO_NAME/app
+          name: app
+          ports:
+            - containerPort: 3000
+          env:
+          - name: DATABASE_URL
+            value: file:/code/sqlite/data.db?connection_limit=1
+          # temporary. manage it with secret manager
+          - name: SESSION_SECRET
+            value: "tmp_ewaiorjfneahjdospab"
+          volumeMounts:
+            - name: sqlite
+              mountPath: /code/sqlite
+        - image: asia-northeast1-docker.pkg.dev/PROJECT_ID/ARTIFACT_REGISTRY_REPO_NAME/litestream
+          name: litestream
+          command: ["replicate"]
+          volumeMounts:
+            - name: sqlite
+              mountPath: /code/sqlite
+      volumes:
+        - name: sqlite
+          emptyDir: 
+            medium: Memory
+            sizeLimit: 256Mi

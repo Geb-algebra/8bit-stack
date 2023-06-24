@@ -1,0 +1,4 @@
+dbs:
+  - path: /code/sqlite/data.db
+    replicas:
+      - url: gcs://8bit-stack-230619/data.db
