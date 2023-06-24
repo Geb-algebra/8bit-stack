@@ -1,8 +1,4 @@
-# Welcome to Remix!
-
-- [Remix Docs](https://remix.run/docs)
-
-## Fly Setup
+# Fly Setup
 
 1. [Install `flyctl`](https://fly.io/docs/getting-started/installing-flyctl/)
 
@@ -12,29 +8,35 @@
 flyctl auth signup
 ```
 
-3. Setup Fly. It might ask if you want to deploy, say no since you haven't built the app yet.
+3. Overwrite app name and region to deploy as you like
+
+```
+# fly.toml
+app = "your-app-name"
+primary_region = "region-you-like
+```
+
+A complete list of region is [here](https://fly.io/docs/reference/regions/#fly-io-regions)
+
+4. Create a new APP on Fly.
 
 ```sh
 flyctl launch
 ```
 
-## Development
+5. Register SESSION_SECRET as an secret
 
-From your terminal:
-
-```sh
-npm run dev
+```
+fly secrets set SESSION_SECRET=your-value
 ```
 
-This starts your app in development mode, rebuilding assets on file changes.
-
-## Deployment
-
-If you've followed the setup instructions already, all you need to do is run this:
+6. Deploy.
 
 ```sh
 npm run deploy
 ```
+
+it automatically creates all infrastructures you need, including a machine with shared-cpu-1x, 1GB persistent volume, shared IPv4 address, dedicated IPv6 address and a domain name for accessing the app.
 
 You can run `flyctl info` to get the url and ip address of your server.
 
