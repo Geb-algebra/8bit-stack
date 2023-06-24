@@ -1,6 +1,6 @@
 import { Authenticator } from 'remix-auth';
 import { FormStrategy } from 'remix-auth-form';
-import { type User, verifyLogin, createUser } from '~/models/user.server';
+import { type User, verifyLogin } from '~/models/user.server';
 
 import { getSession, sessionStorage } from '~/services/session.server';
 
@@ -18,9 +18,6 @@ authenticator.use(
     const username = form.get('username') as string;
     const password = form.get('password') as string;
     const requestFrom = form.get('requestFrom');
-    if (requestFrom === 'signup') {
-      await createUser(username, password);
-    }
     const user = await verifyLogin(username, password);
     if (user === null) {
       if (requestFrom === 'signup') {

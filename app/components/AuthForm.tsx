@@ -9,10 +9,9 @@ function Input(props: {
   className?: string;
 }) {
   return (
-    <div className="w-full h-10 pb-6">
+    <div className="w-full">
       <label htmlFor={props.name}>{props.label}</label>
       <input
-        required
         autoFocus={props.autofocus ?? false}
         name={props.name}
         id={props.id}
@@ -31,8 +30,8 @@ export default function AuthForm(props: {
   requestFrom: string;
 }) {
   return (
-    <Form method="post" className="space-y-6">
-      <p className="text-red-500 my-3">{props.errorMessage}</p>
+    <Form method="post" className="space-y-3">
+      <p className="text-red-500 h-6">{props.errorMessage}</p>
       <Input name="username" label="Username" id="username" type="text" autofocus={true} />
       <Input name="password" label="Password" id="password" type="password" />
       <input type="hidden" name="requestFrom" value={props.requestFrom} />
