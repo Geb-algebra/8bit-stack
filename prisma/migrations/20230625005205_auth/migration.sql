@@ -14,4 +14,7 @@ CREATE TABLE "Password" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "User_name_key" ON "User"("name");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Password_userId_key" ON "Password"("userId");
