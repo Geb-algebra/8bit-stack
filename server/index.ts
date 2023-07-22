@@ -3,8 +3,10 @@ import express from 'express';
 import morgan from 'morgan';
 import { createRequestHandler } from '@remix-run/express';
 
-import * as build from '../build/index.js';
-import { broadcastDevReady } from '@remix-run/node';
+import * as remixBuild from '../build/index.js';
+import { type ServerBuild, broadcastDevReady } from '@remix-run/node';
+
+const build = remixBuild as unknown as ServerBuild;
 
 const app = express();
 

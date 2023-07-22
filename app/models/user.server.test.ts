@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { createUser, deleteUserByName, verifyLogin } from './user.server';
 import { prisma } from '~/db.server';
 

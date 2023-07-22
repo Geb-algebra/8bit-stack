@@ -9,7 +9,7 @@ export default defineConfig({
   plugins: [react(), tsconfigPaths()],
   test: {
     include: ['./app/**/*.test.{ts,tsx}'],
-    globals: false,
+    globals: true,
     environment: 'node',
     setupFiles: ['./test/unit/setup-test-env.ts'],
     singleThread: true, // set this to avoid multiple tests trying to interact DB at the same time.
