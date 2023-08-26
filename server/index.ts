@@ -1,3 +1,5 @@
+import { createServer } from 'http';
+
 import compression from 'compression';
 import express from 'express';
 import morgan from 'morgan';
@@ -23,11 +25,13 @@ app.use('/fonts', express.static('public/fonts', { immutable: true, maxAge: '1y'
 
 app.use(morgan('tiny')); // logging
 
+const httpServer = createServer(app);
+
 app.all('*', createRequestHandler({ build, mode: process.env.NODE_ENV }));
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.info(`Running app in ${process.env.NODE_ENV} mode`);
   console.info(`Express server listening on port ${PORT}`);
   if (process.env.NODE_ENV === 'development') broadcastDevReady(build);
