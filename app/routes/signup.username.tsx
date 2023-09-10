@@ -1,11 +1,12 @@
 import type { ActionArgs, LoaderArgs, V2_MetaFunction } from '@remix-run/node';
-import { json } from '@remix-run/node';
-import { useActionData } from '@remix-run/react';
-import AuthForm from '~/components/AuthForm.tsx';
-import { createUser, getUserByName } from '~/models/user.server.ts';
 import invariant from 'tiny-invariant';
 
-import { authenticator } from '~/services/auth.server.ts';
+import { json, redirect } from '@remix-run/node';
+import { Form, useActionData } from '@remix-run/react';
+import AuthFormInput from '~/components/AuthFormInput.tsx';
+
+import { authenticator, isUsernameAvailable } from '~/services/auth.server.ts';
+import { getSession } from '~/services/session.server.ts';
 
 export async function loader({ request }: LoaderArgs) {
   await authenticator.isAuthenticated(request, {
@@ -18,23 +19,12 @@ export async function action({ request }: ActionArgs) {
   try {
     const cloneData = await request.clone().formData();
     const username = cloneData.get('username');
-    const password = cloneData.get('password');
-    if (!username || !password) {
-      throw new Error('username and password are required');
-    }
-    // typecheck failures are internal error so we suppress them in production
+    if (!username) throw new Error('username is required');
     invariant(typeof username === 'string', 'username must be a string');
-    invariant(typeof password === 'string', 'password must be a string');
-    const existingUser = await getUserByName(username);
-    if (existingUser) {
-      throw new Error('username already taken');
-    }
-    await createUser(username, password);
-    await authenticator.authenticate('user-pass', request, {
-      successRedirect: '/',
-      throwOnError: true,
-    });
-    return json({ errorMessage: '' }, { status: 200 });
+    if (!(await isUsernameAvailable(username))) throw new Error('username already taken');
+    const session = await getSession(request);
+    session.set('username', username);
+    return redirect(`/signup/pass?username=${username}`);
   } catch (error) {
     // Because redirects work by throwing a Response, you need to check if the
     // caught error is a response and return it or throw it again
@@ -58,13 +48,22 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-full flex-col justify-center">
       <div className="mx-auto w-full max-w-md">
-        <AuthForm
-          submitButtonText="Sign Up"
-          errorMessage={actionData?.errorMessage ?? ''}
-          bottomText="Already have an account?"
-          bottomLink={{ text: 'Log In', href: '/login' }}
-          requestFrom="signup"
-        />
+        <p className="text-red-500 h-6">{actionData?.errorMessage ?? ''}</p>
+        <Form method="post">
+          <AuthFormInput
+            name="username"
+            label="Username"
+            id="username"
+            type="text"
+            autofocus={true}
+          />
+          <button
+            type="submit"
+            className="bg-black text-white hover:bg-gray-700  focus:bg-gray-700 w-full py-2 px-4"
+          >
+            Next
+          </button>
+        </Form>
       </div>
     </div>
   );
