@@ -2,7 +2,7 @@ import { test as base } from '@playwright/test';
 import { username, password } from './consts.ts';
 // import { execSync } from 'child_process';
 import { createUser } from '~/models/user.server.ts';
-import { resetDB } from 'test/utils';
+import { resetDB } from 'test/utils.ts';
 
 export const test = base.extend({
   // Extend the base test with a new "login" method.

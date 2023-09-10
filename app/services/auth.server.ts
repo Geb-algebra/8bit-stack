@@ -1,8 +1,8 @@
 import { Authenticator } from 'remix-auth';
 import { FormStrategy } from 'remix-auth-form';
-import { type User, verifyLogin } from '~/models/user.server';
+import { type User, verifyLogin } from '~/models/user.server.ts';
 
-import { getSession, sessionStorage } from '~/services/session.server';
+import { getSession, sessionStorage } from '~/services/session.server.ts';
 
 type UserWithoutPassword = {
   id: User['id'];

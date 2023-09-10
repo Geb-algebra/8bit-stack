@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import compression from 'compression';
 import express from 'express';
 import morgan from 'morgan';
+import closeWithGrace from 'close-with-grace';
 import { createRequestHandler } from '@remix-run/express';
 
 import * as remixBuild from '../build/index.js';
@@ -38,3 +39,9 @@ httpServer.listen(PORT, () => {
 });
 
 // If you want to run the remix dev command with --no-restart, see https://github.com/remix-run/remix/blob/templates_v2_dev/templates/express
+
+closeWithGrace(async () => {
+  await new Promise((resolve, reject) => {
+    httpServer.close((e) => (e ? reject(e) : resolve('ok')));
+  });
+});

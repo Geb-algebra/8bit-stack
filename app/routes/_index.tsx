@@ -1,6 +1,6 @@
 import { type V2_MetaFunction, json, type LoaderArgs } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-import { authenticator } from '~/services/auth.server';
+import { authenticator } from '~/services/auth.server.ts';
 
 export async function loader({ request }: LoaderArgs) {
   const user = await authenticator.isAuthenticated(request, {

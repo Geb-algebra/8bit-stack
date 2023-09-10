@@ -1,12 +1,16 @@
 import { cssBundleHref } from '@remix-run/css-bundle';
 import type { LinksFunction } from '@remix-run/node';
 import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration } from '@remix-run/react';
+import { Suspense, lazy } from 'react';
 import stylesheet from '~/styles/tailwind.css';
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: 'stylesheet', href: cssBundleHref }] : []),
   { rel: 'stylesheet', href: stylesheet },
 ];
+
+const RemixDevTools =
+  process.env.NODE_ENV === 'development' ? lazy(() => import('remix-development-tools')) : null;
 
 export default function App() {
   return (
@@ -22,6 +26,11 @@ export default function App() {
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
+        {RemixDevTools ? (
+          <Suspense>
+            <RemixDevTools />
+          </Suspense>
+        ) : null}
       </body>
     </html>
   );

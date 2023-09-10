@@ -1,9 +1,9 @@
 import type { ActionArgs, LoaderArgs, V2_MetaFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { useActionData } from '@remix-run/react';
-import AuthForm from '~/components/AuthForm';
+import AuthForm from '~/components/AuthForm.tsx';
 
-import { authenticator } from '~/services/auth.server';
+import { authenticator } from '~/services/auth.server.ts';
 
 export async function loader({ request }: LoaderArgs) {
   await authenticator.isAuthenticated(request, {
