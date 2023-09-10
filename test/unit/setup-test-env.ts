@@ -1,7 +1,7 @@
 import { installGlobals } from '@remix-run/node';
 import { beforeEach } from 'vitest';
-import { resetDB } from 'test/utils';
-import { server } from 'mocks/mock-server';
+import { resetDB } from 'test/utils.ts';
+import { server } from 'mocks/mock-server.ts';
 
 installGlobals();
 

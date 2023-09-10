@@ -1,4 +1,4 @@
-import { server } from 'mocks/mock-server';
+import { server } from './mock-server.ts';
 
 server.listen({ onUnhandledRequest: 'bypass' });
 console.info('🔶 Mock server running');

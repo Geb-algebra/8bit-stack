@@ -1,4 +1,4 @@
-import { prisma } from '~/db.server';
+import { prisma } from '~/db.server.ts';
 
 export async function resetDB() {
   // execSync('npx prisma migrate reset --force');  // waste too much time

@@ -1,5 +1,5 @@
-import { createUser, deleteUserByName, verifyLogin } from './user.server';
-import { prisma } from '~/db.server';
+import { createUser, deleteUserByName, verifyLogin } from './user.server.ts';
+import { prisma } from '~/db.server.ts';
 
 describe('createUser', () => {
   it('should create a user', async () => {

@@ -70,9 +70,13 @@ function handleBrowserRequest(
   responseHeaders: Headers,
   remixContext: EntryContext,
 ) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const context =
+      process.env.NODE_ENV === 'development'
+        ? await import('remix-development-tools').then(({ initServer }) => initServer(remixContext))
+        : remixContext;
     const { pipe, abort } = renderToPipeableStream(
-      <RemixServer context={remixContext} url={request.url} abortDelay={ABORT_DELAY} />,
+      <RemixServer context={context} url={request.url} abortDelay={ABORT_DELAY} />,
       {
         onShellReady() {
           const body = new PassThrough();

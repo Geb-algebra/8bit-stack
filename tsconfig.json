@@ -6,7 +6,8 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
-    "moduleResolution": "node",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "resolveJsonModule": true,
     "target": "ES2022",
     "strict": true,
@@ -15,7 +16,8 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["./app/*"],
-      "test/*": ["./test/*"]
+      "test/*": ["./test/*"],
+      "mocks/*": ["./mocks/*"]
     },
     "skipLibCheck": true,
     "allowImportingTsExtensions": true,
