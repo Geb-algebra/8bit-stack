@@ -5,6 +5,8 @@ export default function Input(props: {
   type: string;
   autofocus?: boolean;
   className?: string;
+  disabled?: boolean;
+  value?: string;
 }) {
   return (
     <div className="w-full">
@@ -14,7 +16,9 @@ export default function Input(props: {
         name={props.name}
         id={props.id}
         type={props.type}
-        className="w-full border px-2 py-1 h-10"
+        className="w-full border px-2 py-1 h-10 rounded-lg"
+        disabled={props.disabled ?? false}
+        value={props.value}
       />
     </div>
   );

@@ -10,7 +10,7 @@ export default function LoginPage() {
   return (
     <>
       <Outlet />
-      <div className="text-center">
+      <div className="pt-6 text-center">
         Do not have an account?{' '}
         <Link to="/signup" className="text-blue-500 underline">
           Sign Up

@@ -5,6 +5,9 @@ import invariant from 'tiny-invariant';
 import { handleFormSubmit, type WebAuthnOptionsResponse } from 'remix-auth-webauthn';
 
 import { authenticator, isUsernameAvailable } from '~/services/auth.server.ts';
+import AuthContainer from '~/components/AuthContainer.tsx';
+import AuthButton from '~/components/AuthButton.tsx';
+import AuthErrorMessage from '~/components/AuthErrorMessage.tsx';
 
 export async function loader({ request }: LoaderArgs) {
   await authenticator.isAuthenticated(request, { successRedirect: '/' });
@@ -58,35 +61,36 @@ export default function LoginPage() {
   invariant(!!username, 'username is required');
 
   return (
-    <>
-      <p className="h-6 border-b">Username: {username}</p>
-      <Form method="post" onSubmit={handleFormSubmit(options, 'registration')}>
-        <p className="text-red-500 h-6">{actionData?.error.message ?? ''}</p>
-        {/* remix-auth-webauthn requires that the id of this form being "email" and name being "username" */}
-        <input type="hidden" name="username" id="email" value={username} />
-        <input type="hidden" name="auth-method" id="auth-method" value="webauthn" />
-        <button
-          type="submit"
-          className="bg-black text-white hover:bg-gray-700  focus:bg-gray-700 w-full py-2 px-4"
-          value="registration"
-        >
-          Sign Up with Passkey
-        </button>
-      </Form>
-      <p className="h-6 border-y">or</p>
-      <Form method="post">
-        <p className="text-red-500 h-6">{actionData?.error.message ?? ''}</p>
-        <input type="hidden" name="username" id="username" value={username} />
-        <input type="hidden" name="auth-method" id="auth-method" value="user-pass" />
-        <input type="hidden" name="type" id="type" value="registration" />
-        <AuthFormInput name="password" label="Password" id="password" type="password" />
-        <button
-          type="submit"
-          className="bg-black text-white hover:bg-gray-700  focus:bg-gray-700 w-full py-2 px-4"
-        >
-          Sign Up with Password
-        </button>
-      </Form>
-    </>
+    <div className="flex flex-col gap-6">
+      <AuthContainer>
+        <AuthFormInput
+          name="username"
+          label="Username"
+          id="username"
+          type="text"
+          disabled={true}
+          value={username}
+        />
+      </AuthContainer>
+      <AuthErrorMessage message={actionData?.error.message} />
+      <AuthContainer>
+        <Form method="post" onSubmit={handleFormSubmit(options)}>
+          {/* remix-auth-webauthn requires that the id of this form being "email" and name being "username" */}
+          <input type="hidden" name="username" id="email" value={username} />
+          <input type="hidden" name="auth-method" id="auth-method" value="webauthn" />
+          <AuthButton type="submit" value="registration">
+            Sign Up with Passkey
+          </AuthButton>
+        </Form>
+        <p className="h-6 text-center">or</p>
+        <Form method="post" className="flex flex-col gap-6">
+          <input type="hidden" name="username" id="username" value={username} />
+          <input type="hidden" name="auth-method" id="auth-method" value="user-pass" />
+          <input type="hidden" name="type" id="type" value="registration" />
+          <AuthFormInput name="password" label="Password" id="password" type="password" />
+          <AuthButton type="submit">Sign Up with Password</AuthButton>
+        </Form>
+      </AuthContainer>
+    </div>
   );
 }

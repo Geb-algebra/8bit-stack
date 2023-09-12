@@ -7,6 +7,9 @@ import AuthFormInput from '~/components/AuthFormInput.tsx';
 
 import { authenticator, isUsernameAvailable } from '~/services/auth.server.ts';
 import { getSession } from '~/services/session.server.ts';
+import AuthContainer from '~/components/AuthContainer.tsx';
+import AuthButton from '~/components/AuthButton.tsx';
+import AuthErrorMessage from '~/components/AuthErrorMessage.tsx';
 
 export async function loader({ request }: LoaderArgs) {
   await authenticator.isAuthenticated(request, {
@@ -46,15 +49,22 @@ export default function LoginPage() {
   const actionData = useActionData<typeof action>();
 
   return (
-    <Form method="post">
-      <p className="text-red-500 h-6">{actionData?.errorMessage ?? ''}</p>
-      <AuthFormInput name="username" label="Username" id="username" type="text" autofocus={true} />
-      <button
-        type="submit"
-        className="bg-black text-white hover:bg-gray-700  focus:bg-gray-700 w-full py-2 px-4"
-      >
-        Next
-      </button>
-    </Form>
+    <div className="flex flex-col gap-6">
+      <AuthErrorMessage message={actionData?.errorMessage} />
+      <AuthContainer>
+        <Form method="post" className="flex flex-col gap-6 ">
+          <div>
+            <AuthFormInput
+              name="username"
+              label="Username"
+              id="username"
+              type="text"
+              autofocus={true}
+            />
+          </div>
+          <AuthButton type="submit">Next</AuthButton>
+        </Form>
+      </AuthContainer>
+    </div>
   );
 }

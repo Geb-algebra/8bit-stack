@@ -1,9 +1,17 @@
-import type { DataFunctionArgs, LoaderArgs, V2_MetaFunction } from '@remix-run/node';
+import {
+  json,
+  type DataFunctionArgs,
+  type LoaderArgs,
+  type V2_MetaFunction,
+} from '@remix-run/node';
 import { Form, Link, useActionData, useLoaderData } from '@remix-run/react';
-import invariant from 'tiny-invariant';
 import { handleFormSubmit, type WebAuthnOptionsResponse } from 'remix-auth-webauthn';
 
 import { authenticator } from '~/services/auth.server.ts';
+import AuthContainer from '~/components/AuthContainer.tsx';
+import AuthButton from '~/components/AuthButton.tsx';
+import AuthErrorMessage from '~/components/AuthErrorMessage.tsx';
+import { redirect } from 'react-router-dom';
 
 export async function loader({ request }: LoaderArgs) {
   await authenticator.isAuthenticated(request, { successRedirect: '/' });
@@ -45,23 +53,19 @@ export default function LoginPage() {
   const actionData = useActionData<typeof action>();
 
   return (
-    <>
-      <Form method="post" onSubmit={handleFormSubmit(options, 'authentication')}>
-        <p className="text-red-500 h-6">{actionData?.error.message ?? ''}</p>
-        <button
-          type="submit"
-          className="bg-black text-white hover:bg-gray-700  focus:bg-gray-700 w-full py-2 px-4"
-          value="authentication"
-        >
-          Log In with Passkey
-        </button>
-      </Form>
-      <p className="h-6 border-y">or</p>
-      <Link to="/login/password">
-        <button className="bg-black text-white hover:bg-gray-700  focus:bg-gray-700 w-full py-2 px-4">
-          Log In with Password
-        </button>
-      </Link>
-    </>
+    <div className="flex flex-col gap-6">
+      <AuthErrorMessage message={actionData?.error.message} />
+      <AuthContainer>
+        <Form method="post" onSubmit={handleFormSubmit(options, 'authentication')}>
+          <AuthButton type="submit" value="authentication">
+            Log In with Passkey
+          </AuthButton>
+        </Form>
+        <p className="h-6 w-full text-center">or</p>
+        <Link to="/login/password">
+          <AuthButton>Log In with Password</AuthButton>
+        </Link>
+      </AuthContainer>
+    </div>
   );
 }

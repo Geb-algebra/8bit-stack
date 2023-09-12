@@ -1,6 +1,9 @@
 import type { ActionArgs, LoaderArgs, V2_MetaFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { Form, Link, useActionData } from '@remix-run/react';
+import AuthButton from '~/components/AuthButton.tsx';
+import AuthContainer from '~/components/AuthContainer.tsx';
+import AuthErrorMessage from '~/components/AuthErrorMessage.tsx';
 import AuthForm from '~/components/AuthForm.tsx';
 import AuthFormInput from '~/components/AuthFormInput.tsx';
 
@@ -35,17 +38,22 @@ export default function LoginPage() {
   const actionData = useActionData<typeof action>();
 
   return (
-    <Form method="post" className="space-y-3">
-      <p className="text-red-500 h-6">{actionData?.error.message ?? ''}</p>
-      <AuthFormInput name="username" label="Username" id="username" type="text" autofocus={true} />
-      <AuthFormInput name="password" label="Password" id="password" type="password" />
-      <input type="hidden" name="type" value="authentication" />
-      <button
-        type="submit"
-        className="bg-blue-500 text-white hover:bg-blue-600  focus:bg-blue-400 w-full py-2 px-4"
-      >
-        Log In
-      </button>
-    </Form>
+    <div className="flex flex-col gap-6">
+      <AuthErrorMessage message={actionData?.error.message} />
+      <AuthContainer>
+        <Form method="post" className="flex flex-col gap-6">
+          <AuthFormInput
+            name="username"
+            label="Username"
+            id="username"
+            type="text"
+            autofocus={true}
+          />
+          <AuthFormInput name="password" label="Password" id="password" type="password" />
+          <input type="hidden" name="type" value="authentication" />
+          <AuthButton type="submit">Log In</AuthButton>
+        </Form>
+      </AuthContainer>
+    </div>
   );
 }
