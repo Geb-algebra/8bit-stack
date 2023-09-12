@@ -2,7 +2,7 @@ import type { ActionArgs, LoaderArgs, V2_MetaFunction } from '@remix-run/node';
 import invariant from 'tiny-invariant';
 
 import { json, redirect } from '@remix-run/node';
-import { Form, useActionData } from '@remix-run/react';
+import { Form, Link, useActionData } from '@remix-run/react';
 import AuthFormInput from '~/components/AuthFormInput.tsx';
 
 import { authenticator, isUsernameAvailable } from '~/services/auth.server.ts';
@@ -46,25 +46,15 @@ export default function LoginPage() {
   const actionData = useActionData<typeof action>();
 
   return (
-    <div className="flex min-h-full flex-col justify-center">
-      <div className="mx-auto w-full max-w-md">
-        <p className="text-red-500 h-6">{actionData?.errorMessage ?? ''}</p>
-        <Form method="post">
-          <AuthFormInput
-            name="username"
-            label="Username"
-            id="username"
-            type="text"
-            autofocus={true}
-          />
-          <button
-            type="submit"
-            className="bg-black text-white hover:bg-gray-700  focus:bg-gray-700 w-full py-2 px-4"
-          >
-            Next
-          </button>
-        </Form>
-      </div>
-    </div>
+    <Form method="post">
+      <p className="text-red-500 h-6">{actionData?.errorMessage ?? ''}</p>
+      <AuthFormInput name="username" label="Username" id="username" type="text" autofocus={true} />
+      <button
+        type="submit"
+        className="bg-black text-white hover:bg-gray-700  focus:bg-gray-700 w-full py-2 px-4"
+      >
+        Next
+      </button>
+    </Form>
   );
 }
