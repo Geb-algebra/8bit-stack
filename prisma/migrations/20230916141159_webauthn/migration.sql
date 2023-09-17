@@ -1,6 +1,7 @@
 -- CreateTable
 CREATE TABLE "Authenticator" (
     "credentialID" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT,
     "userId" TEXT NOT NULL,
     "credentialPublicKey" TEXT NOT NULL,
     "counter" INTEGER NOT NULL,

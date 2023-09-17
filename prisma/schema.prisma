@@ -30,6 +30,7 @@ model Password {
 
 model Authenticator {
     credentialID         String   @id
+    name                 String?
     user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
     userId               String
     credentialPublicKey  String
