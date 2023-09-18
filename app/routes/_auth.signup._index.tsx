@@ -2,7 +2,7 @@ import type { ActionArgs, LoaderArgs, V2_MetaFunction } from '@remix-run/node';
 import invariant from 'tiny-invariant';
 
 import { json, redirect } from '@remix-run/node';
-import { Form, Link, useActionData } from '@remix-run/react';
+import { Form, useActionData } from '@remix-run/react';
 import AuthFormInput from '~/components/AuthFormInput.tsx';
 
 import { authenticator, isUsernameAvailable } from '~/services/auth.server.ts';

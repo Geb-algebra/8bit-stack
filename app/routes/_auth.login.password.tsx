@@ -1,10 +1,9 @@
 import type { ActionArgs, LoaderArgs, V2_MetaFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
-import { Form, Link, useActionData } from '@remix-run/react';
+import { Form, useActionData } from '@remix-run/react';
 import AuthButton from '~/components/AuthButton.tsx';
 import AuthContainer from '~/components/AuthContainer.tsx';
 import AuthErrorMessage from '~/components/AuthErrorMessage.tsx';
-import AuthForm from '~/components/AuthForm.tsx';
 import AuthFormInput from '~/components/AuthFormInput.tsx';
 
 import { authenticator } from '~/services/auth.server.ts';

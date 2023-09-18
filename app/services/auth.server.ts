@@ -17,8 +17,6 @@ import { getSession, sessionStorage } from '~/services/session.server.ts';
 
 export let authenticator = new Authenticator<User>(sessionStorage);
 
-type VerificationType = 'registration' | 'authentication';
-
 export async function isUsernameAvailable(username: string) {
   const user = await getUserByName(username);
   return !user;

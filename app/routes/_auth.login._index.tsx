@@ -1,9 +1,4 @@
-import {
-  json,
-  type DataFunctionArgs,
-  type LoaderArgs,
-  type V2_MetaFunction,
-} from '@remix-run/node';
+import { type DataFunctionArgs, type LoaderArgs, type V2_MetaFunction } from '@remix-run/node';
 import { Form, Link, useActionData, useLoaderData } from '@remix-run/react';
 import { handleFormSubmit, type WebAuthnOptionsResponse } from 'remix-auth-webauthn';
 
@@ -11,7 +6,6 @@ import { authenticator } from '~/services/auth.server.ts';
 import AuthContainer from '~/components/AuthContainer.tsx';
 import AuthButton from '~/components/AuthButton.tsx';
 import AuthErrorMessage from '~/components/AuthErrorMessage.tsx';
-import { redirect } from 'react-router-dom';
 
 export async function loader({ request }: LoaderArgs) {
   await authenticator.isAuthenticated(request, { successRedirect: '/' });

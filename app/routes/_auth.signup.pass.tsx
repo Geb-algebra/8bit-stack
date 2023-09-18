@@ -1,5 +1,5 @@
 import type { DataFunctionArgs, LoaderArgs, V2_MetaFunction } from '@remix-run/node';
-import { Form, Link, useActionData, useLoaderData, useSearchParams } from '@remix-run/react';
+import { Form, useActionData, useLoaderData, useSearchParams } from '@remix-run/react';
 import AuthFormInput from '~/components/AuthFormInput.tsx';
 import invariant from 'tiny-invariant';
 import { handleFormSubmit, type WebAuthnOptionsResponse } from 'remix-auth-webauthn';

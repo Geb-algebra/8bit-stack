@@ -34,12 +34,10 @@ describe('verifyLogin', () => {
     const userWithPass = await verifyPasswordLogin('test', 'test');
     expect(userWithPass).not.toBeNull();
   });
-  it('should return null if login failed', async () => {
+  it('should throw if login failed', async () => {
     const user = await createUser('test');
     await addPasswordToUser(user.id, 'test');
-    const userWithPass = await verifyPasswordLogin('test', 'wrong password');
-    expect(userWithPass).toBeNull();
-    const user2WithPass = await verifyPasswordLogin('wrong username', 'test');
-    expect(user2WithPass).toBeNull();
+    expect(verifyPasswordLogin('test', 'wrong password')).rejects.toThrow();
+    expect(verifyPasswordLogin('wrong username', 'test')).rejects.toThrow();
   });
 });
