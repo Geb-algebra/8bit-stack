@@ -101,3 +101,14 @@ export async function verifyPasswordLogin(name: User['name'], password: Password
   const { password: _password, ...userWithoutPassword } = userWithPassword;
   return userWithoutPassword;
 }
+
+export async function updatePassword(userId: User['id'], password: Password['hash']) {
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  return prisma.password.update({
+    where: { userId },
+    data: {
+      hash: hashedPassword,
+    },
+  });
+}
