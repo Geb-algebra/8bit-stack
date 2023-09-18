@@ -7,6 +7,7 @@ import stylesheet from '~/styles/tailwind.css';
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: 'stylesheet', href: cssBundleHref }] : []),
   { rel: 'stylesheet', href: stylesheet },
+  { rel: 'stylesheet', href: 'https://fonts.googleapis.com/icon?family=Material+Icons' },
 ];
 
 const RemixDevTools =

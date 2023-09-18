@@ -34,7 +34,7 @@ const PORT = process.env.PORT || 3000;
 
 httpServer.listen(PORT, () => {
   console.info(`Running app in ${process.env.NODE_ENV} mode`);
-  console.info(`Express server listening on port ${PORT}`);
+  console.info(`Express server running at: http://localhost:${PORT}`);
   if (process.env.NODE_ENV === 'development') broadcastDevReady(build);
 });
 

@@ -1,60 +1,90 @@
 import type { Password, User } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import type { Authenticator } from 'remix-auth-webauthn';
 
 import { prisma } from '~/db.server.ts';
 
 export type { User } from '@prisma/client';
 
-export const getUserById = async (id: User['id']) => {
+export async function getUserById(id: User['id']) {
   return prisma.user.findUnique({ where: { id } });
-};
+}
 
-export const getUserByName = async (name: User['name']) => {
+export async function getUserByName(name: User['name']) {
   return prisma.user.findUnique({ where: { name } });
-};
+}
 
 /**
- * hash password and create a new user with it
+ * create a new user with it
+ *
+ * note that this function create no password or authenticator for the user
  * @param name user name
  * @param password password before hashing
  * @returns created user
  */
-export const createUser = async (name: User['name'], password: string) => {
+export async function createUser(name: User['name']) {
+  const existingUser = await prisma.user.findUnique({ where: { name } });
+  if (existingUser) {
+    throw new Error('username already taken');
+  }
+  const user = await prisma.user.create({
+    data: { name },
+  });
+  console.info('new user created:', user);
+  return user;
+}
+
+/**
+ * add a password to a user
+ */
+export async function addPasswordToUser(userId: string, password: Password['hash']) {
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  try {
-    const existingUser = await prisma.user.findUnique({ where: { name } });
-    if (existingUser) {
-      throw new Error('username already taken');
-    }
-    const user = await prisma.user.create({
-      data: {
-        name,
-        password: {
-          create: {
-            hash: hashedPassword,
-          },
+  return prisma.password.create({
+    data: {
+      hash: hashedPassword,
+      user: {
+        connect: {
+          id: userId,
         },
       },
-    });
-    console.info('new user created:', user);
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};
+    },
+  });
+}
 
-export const deleteUserByName = async (name: User['name']) => {
+/**
+ * add an authenticator to a user
+ * @param userId user id
+ * @param authenticator authenticator object
+ */
+export async function addAuthenticatorToUser(
+  userId: string,
+  authenticator: Omit<Authenticator, 'userId'>,
+) {
+  return prisma.authenticator.create({
+    data: {
+      ...authenticator,
+      user: {
+        connect: {
+          id: userId,
+        },
+      },
+    },
+  });
+}
+
+export async function deleteUserByName(name: User['name']) {
   return prisma.user.delete({ where: { name } });
-};
+}
 
 /**
  * check if a user can login.
  * @param name user name
  * @param password hashed password
- * @returns user without password if login success, otherwise null
+ * @returns user without password
+ * @throws {Error} if user not found, or password is invalid
  */
-export const verifyLogin = async (name: User['name'], password: Password['hash']) => {
+export async function verifyPasswordLogin(name: User['name'], password: Password['hash']) {
   const userWithPassword = await prisma.user.findUnique({
     where: { name },
     include: {
@@ -62,17 +92,23 @@ export const verifyLogin = async (name: User['name'], password: Password['hash']
     },
   });
 
-  if (!userWithPassword || !userWithPassword.password) {
-    return null;
-  }
+  if (!userWithPassword) throw new Error('user not found');
+  if (!userWithPassword.password) throw new Error('user has no password');
 
   const isValid = await bcrypt.compare(password, userWithPassword.password.hash);
-
-  if (!isValid) {
-    return null;
-  }
+  if (!isValid) throw new Error('invalid password');
 
   const { password: _password, ...userWithoutPassword } = userWithPassword;
-
   return userWithoutPassword;
-};
+}
+
+export async function updatePassword(userId: User['id'], password: Password['hash']) {
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  return prisma.password.update({
+    where: { userId },
+    data: {
+      hash: hashedPassword,
+    },
+  });
+}

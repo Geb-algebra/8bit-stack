@@ -2,6 +2,7 @@
 export default {
   ignoredRouteFiles: ['**/.*'],
   serverModuleFormat: 'esm',
+  serverDependenciesToBundle: ['remix-auth-webauthn'],
   tailwind: true,
   future: {
     v2_errorBoundary: true,
