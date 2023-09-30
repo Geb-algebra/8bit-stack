@@ -14,53 +14,94 @@ import { type User } from '~/models/user.server.ts';
 import { authenticator } from '~/services/auth.server.ts';
 import type { TransportsSplitAuthenticator } from '~/models/authenticator.server.ts';
 import invariant from 'tiny-invariant';
-import { updatePassword, verifyPasswordLogin } from '~/models/password.server.ts';
+import {
+  addPasswordToUser,
+  hasPassword,
+  updatePassword,
+  verifyPasswordLogin,
+} from '~/models/password.server.ts';
 import { getRequiredStringFromFormData } from '~/utils.ts';
+import AuthButton from '~/components/AuthButton.tsx';
 
 export async function loader({ request }: LoaderArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
-  const authenticators = await getAuthenticators(user);
-  return json({ user, authenticators });
+  return json({
+    user,
+    authenticators: await getAuthenticators(user),
+    hasPassword: await hasPassword(user.id),
+  });
 }
 
 export async function action({ request }: ActionArgs) {
+  const user = await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
   const formData = await request.formData();
   const targetResource = formData.get('target-resource');
+  const method = request.method.toLowerCase();
 
   if (targetResource === 'passkey') {
     const passkeyId = getRequiredStringFromFormData(formData, 'passkey-id');
-    const method = request.method.toLowerCase();
-    invariant(['put', 'delete'].includes(method), 'Method must be one of post, put, delete');
+    invariant(['put', 'delete'].includes(method), 'Method must be one of put, delete');
 
     if (method === 'put') {
       const name = getRequiredStringFromFormData(formData, 'passkey-name');
       await renameAuthenticator(passkeyId, name);
     } else if (method === 'delete') {
+      if (!(await hasPassword(user.id)) && (await getAuthenticators(user)).length === 1) {
+        return json(
+          { errorMessage: 'You must have at least one passkey or password' },
+          { status: 400 },
+        );
+      }
       await deleteAuthenticator(passkeyId);
     }
     return json({ ok: true });
   }
 
   if (targetResource === 'password') {
-    const username = getRequiredStringFromFormData(formData, 'username');
-    const oldPassword = getRequiredStringFromFormData(formData, 'old-password');
-    let user: User;
-    try {
-      user = await verifyPasswordLogin(username, oldPassword);
-    } catch (error) {
-      if (error instanceof Error) {
-        return { errorMessage: error.message };
-      } else {
-        throw error;
+    invariant(['post', 'put'].includes(method), 'Method must be one of post, put');
+
+    if (method === 'post') {
+      const newPassword = getRequiredStringFromFormData(formData, 'new-password');
+      const confirmNewPassword = getRequiredStringFromFormData(formData, 'confirm-new-password');
+      if (newPassword !== confirmNewPassword) {
+        return { errorMessage: 'New password and confirm new password must match.' };
+      }
+      try {
+        await addPasswordToUser(user.id, newPassword);
+      } catch (error) {
+        if (error instanceof Error) {
+          return { errorMessage: error.message };
+        } else {
+          throw error;
+        }
+      }
+    } else if (method === 'put') {
+      const oldPassword = getRequiredStringFromFormData(formData, 'old-password');
+      try {
+        await verifyPasswordLogin(user.name, oldPassword);
+      } catch (error) {
+        if (error instanceof Error) {
+          return { errorMessage: error.message };
+        } else {
+          throw error;
+        }
+      }
+
+      const newPassword = getRequiredStringFromFormData(formData, 'new-password');
+      const confirmNewPassword = getRequiredStringFromFormData(formData, 'confirm-new-password');
+      if (newPassword !== confirmNewPassword) {
+        return { errorMessage: 'New password and confirm new password must match.' };
+      }
+      try {
+        await updatePassword(user.id, newPassword);
+      } catch (error) {
+        if (error instanceof Error) {
+          return { errorMessage: error.message };
+        } else {
+          throw error;
+        }
       }
     }
-
-    const newPassword = getRequiredStringFromFormData(formData, 'new-password');
-    const confirmNewPassword = getRequiredStringFromFormData(formData, 'confirm-new-password');
-    if (newPassword !== confirmNewPassword) {
-      return { errorMessage: 'New password and confirm new password must match.' };
-    }
-    await updatePassword(user.id, newPassword);
 
     return redirect('/settings');
   }
@@ -141,15 +182,22 @@ function Passkey(props: { authenticator: SerializeFrom<TransportsSplitAuthentica
   );
 }
 
-function PasswordUpdateForm(props: { user: SerializeFrom<User> }) {
+function PasswordForm(props: { user: SerializeFrom<User>; hasPassword: boolean }) {
   const fetcher = useFetcher();
   const [showConfirmation, setShowConfirmation] = useState(false);
   return (
-    <fetcher.Form method="put" className="flex flex-col gap-6">
+    <fetcher.Form
+      method={props.hasPassword ? 'put' : 'post'}
+      className="flex flex-col gap-6"
+      onSubmit={(e) => {
+        setShowConfirmation(false);
+      }}
+    >
       <p className="text-red-500 ">{fetcher.data?.errorMessage}</p>
       <input type="hidden" name="target-resource" id="target-resource" value="password" />
-      <input type="hidden" name="username" id="username" value={props.user.name} />
-      <AuthFormInput name="old-password" label="Old password" id="old-password" type="password" />
+      {props.hasPassword ? (
+        <AuthFormInput name="old-password" label="Old password" id="old-password" type="password" />
+      ) : null}
       <AuthFormInput name="new-password" label="New password" id="new-password" type="password" />
       <AuthFormInput
         name="confirm-new-password"
@@ -157,23 +205,18 @@ function PasswordUpdateForm(props: { user: SerializeFrom<User> }) {
         id="confirm-new-password"
         type="password"
       />
-      <button type="button" onClick={() => setShowConfirmation(true)} className="text-red-500">
-        Update Password
-      </button>
+      <AuthButton type="button" onClick={() => setShowConfirmation(true)}>
+        {(props.hasPassword ? 'Update' : 'Create') + ' Password'}
+      </AuthButton>
       <Overlay isShown={showConfirmation} setIsShown={setShowConfirmation}>
-        <div className="w-96 rounded-lg border border-gray-300 bg-white">
-          <p className="mx-6 my-6 text-2xl font-bold">Update password</p>
-          <p className="mx-6 my-6">Are you sure you want to update your password?</p>
-          <button
-            type="submit"
-            className="text-red-500 mx-6 mb-6"
-            onClick={(e) => {
-              setShowConfirmation(false);
-              fetcher.submit(e.currentTarget.form);
-            }}
-          >
-            Update my password
-          </button>
+        <div className="w-96 rounded-lg border border-gray-300 bg-white px-6 py-6">
+          <p className="text-2xl font-bold">Update password</p>
+          <p className="my-6">{`Are you sure you want to ${
+            props.hasPassword ? 'update your' : 'create new'
+          } password?`}</p>
+          <AuthButton type="submit">
+            {`${props.hasPassword ? 'Update my' : 'create new'} password`}
+          </AuthButton>
         </div>
       </Overlay>
     </fetcher.Form>
@@ -201,8 +244,10 @@ export default function Page() {
           </Link>
         </div>
         <div className="flex flex-col gap-6 pt-6">
-          <p className="text-2xl font-bold">Update Password</p>
-          <PasswordUpdateForm user={loaderData.user} />
+          <p className="text-2xl font-bold">{`${
+            loaderData.hasPassword ? 'Update' : 'Create'
+          } Password`}</p>
+          <PasswordForm user={loaderData.user} hasPassword={loaderData.hasPassword} />
         </div>
       </div>
     </div>

@@ -27,7 +27,7 @@ describe('verifyLogin', () => {
   it('should return user if login success', async () => {
     const user = await createUserOrThrow('test', 'testid');
     await addPasswordToUser(user.id, 'Test0000');
-    const userWithPass = await verifyPasswordLogin('test', 'test');
+    const userWithPass = await verifyPasswordLogin('test', 'Test0000');
     expect(userWithPass).not.toBeNull();
   });
   it('should throw if login failed', async () => {
