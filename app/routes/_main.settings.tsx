@@ -1,15 +1,21 @@
 import type { ActionArgs, LoaderArgs, SerializeFrom, V2_MetaFunction } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
-import { useLoaderData, useFetcher } from '@remix-run/react';
+import { useLoaderData, useFetcher, Link } from '@remix-run/react';
 import { useState } from 'react';
 import AuthFormInput from '~/components/AuthFormInput.tsx';
 import Icon from '~/components/Icon.tsx';
 import Overlay from '~/components/Overlay.tsx';
-import { getAuthenticators, renameAuthenticator } from '~/models/authenticator.server.ts';
-import { verifyPasswordLogin, type User, updatePassword } from '~/models/user.server.ts';
+import {
+  deleteAuthenticator,
+  getAuthenticators,
+  renameAuthenticator,
+} from '~/models/authenticator.server.ts';
+import { type User } from '~/models/user.server.ts';
 import { authenticator } from '~/services/auth.server.ts';
 import type { TransportsSplitAuthenticator } from '~/models/authenticator.server.ts';
 import invariant from 'tiny-invariant';
+import { updatePassword, verifyPasswordLogin } from '~/models/password.server.ts';
+import { getRequiredStringFromFormData } from '~/utils.ts';
 
 export async function loader({ request }: LoaderArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
@@ -22,36 +28,22 @@ export async function action({ request }: ActionArgs) {
   const targetResource = formData.get('target-resource');
 
   if (targetResource === 'passkey') {
-    const passkeyId = formData.get('passkey-id');
-    if (!passkeyId) return { errorMessage: 'Target passkey id is required.' };
-    invariant(typeof passkeyId === 'string', 'Target passkey id must be a string.');
+    const passkeyId = getRequiredStringFromFormData(formData, 'passkey-id');
     const method = request.method.toLowerCase();
-    invariant(
-      ['post', 'put', 'delete'].includes(method),
-      'Method must be one of post, put, delete',
-    );
+    invariant(['put', 'delete'].includes(method), 'Method must be one of post, put, delete');
 
-    if (method === 'post') {
-      return null;
-    } else if (method === 'put') {
-      const name = formData.get('passkey-name');
-      if (!name) return { errorMessage: 'Passkey name is required.' };
-      invariant(typeof name === 'string', 'Passkey name must be a string.');
+    if (method === 'put') {
+      const name = getRequiredStringFromFormData(formData, 'passkey-name');
       await renameAuthenticator(passkeyId, name);
-      return null;
     } else if (method === 'delete') {
-      // TODO: Uncomment delete passkey after making a way to create another passkey
-      // await deleteAuthenticator(passkeyId);
-      return null;
+      await deleteAuthenticator(passkeyId);
     }
-    return redirect('/');
+    return json({ ok: true });
   }
 
   if (targetResource === 'password') {
-    const username = formData.get('username');
-    const oldPassword = formData.get('old-password');
-    invariant(typeof username === 'string', 'Username must be a string.');
-    invariant(typeof oldPassword === 'string', 'Old password must be a string.');
+    const username = getRequiredStringFromFormData(formData, 'username');
+    const oldPassword = getRequiredStringFromFormData(formData, 'old-password');
     let user: User;
     try {
       user = await verifyPasswordLogin(username, oldPassword);
@@ -63,10 +55,8 @@ export async function action({ request }: ActionArgs) {
       }
     }
 
-    const newPassword = formData.get('new-password');
-    const confirmNewPassword = formData.get('confirm-new-password');
-    invariant(typeof newPassword === 'string', 'New password must be a string.');
-    invariant(typeof confirmNewPassword === 'string', 'Confirm new password must be a string.');
+    const newPassword = getRequiredStringFromFormData(formData, 'new-password');
+    const confirmNewPassword = getRequiredStringFromFormData(formData, 'confirm-new-password');
     if (newPassword !== confirmNewPassword) {
       return { errorMessage: 'New password and confirm new password must match.' };
     }
@@ -85,7 +75,7 @@ function Passkey(props: { authenticator: SerializeFrom<TransportsSplitAuthentica
   const [isPasskeyEditing, setIsPasskeyEditing] = useState(false);
   const [isPasskeyDeleting, setIsPasskeyDeleting] = useState(false);
   return (
-    <div
+    <li
       className="flex items-center gap-6 px-4 py-4 rounded-lg border border-gray-300"
       key={props.authenticator.credentialID}
     >
@@ -104,7 +94,11 @@ function Passkey(props: { authenticator: SerializeFrom<TransportsSplitAuthentica
       <Overlay isShown={isPasskeyEditing} setIsShown={setIsPasskeyEditing}>
         <div className="w-96 rounded-lg border border-gray-300 bg-white">
           <p className="mx-6 my-6 text-2xl font-bold">Edit Passkey</p>
-          <fetcher.Form method="put" className="mx-6 my-6">
+          <fetcher.Form
+            method="put"
+            className="mx-6 my-6"
+            onSubmit={() => setIsPasskeyEditing(false)}
+          >
             <input type="hidden" name="target-resource" id="target-resource" value="passkey" />
             <input
               type="hidden"
@@ -113,11 +107,7 @@ function Passkey(props: { authenticator: SerializeFrom<TransportsSplitAuthentica
               value={props.authenticator.credentialID}
             />
             <AuthFormInput name="passkey-name" label="Passkey name" id="passkey-name" type="text" />
-            <button
-              type="submit"
-              className="text-red-500"
-              onClick={() => setIsPasskeyEditing(false)}
-            >
+            <button type="submit" className="text-red-500">
               Update Passkey
             </button>
           </fetcher.Form>
@@ -126,7 +116,11 @@ function Passkey(props: { authenticator: SerializeFrom<TransportsSplitAuthentica
       <Overlay isShown={isPasskeyDeleting} setIsShown={setIsPasskeyDeleting}>
         <div className="w-96 rounded-lg border border-gray-300 bg-white">
           <p className="mx-6 my-6 text-2xl font-bold">Delete Passkey</p>
-          <fetcher.Form method="delete" className="mx-6 my-6">
+          <fetcher.Form
+            method="delete"
+            className="mx-6 my-6"
+            onSubmit={() => setIsPasskeyDeleting(false)}
+          >
             <input type="hidden" name="target-resource" id="target-resource" value="passkey" />
             <input
               type="hidden"
@@ -143,7 +137,7 @@ function Passkey(props: { authenticator: SerializeFrom<TransportsSplitAuthentica
           </fetcher.Form>
         </div>
       </Overlay>
-    </div>
+    </li>
   );
 }
 
@@ -194,11 +188,17 @@ export default function Page() {
       <div className="max-w-lg mx-auto pt-6">
         <div className="flex flex-col gap-6">
           <p className="text-2xl font-bold">Passkeys</p>
-          <div className="flex flex-col gap-6">
+          <ul className="flex flex-col gap-6">
             {loaderData.authenticators.map((passkey) => (
               <Passkey authenticator={passkey} key={passkey.credentialID} />
             ))}
-          </div>
+          </ul>
+          <Link
+            to="/add-passkey"
+            className="flex justify-center px-6 py-6 rounded-lg border border-dashed border-gray-300"
+          >
+            Add Passkey
+          </Link>
         </div>
         <div className="flex flex-col gap-6 pt-6">
           <p className="text-2xl font-bold">Update Password</p>

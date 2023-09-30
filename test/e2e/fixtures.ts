@@ -1,20 +1,24 @@
 import { test as base } from '@playwright/test';
 import { username, password } from './consts.ts';
 
-import { addPasswordToUser, createUser } from '~/models/user.server.ts';
+import { createUserOrThrow } from '~/models/user.server.ts';
+import { addPasswordToUser } from '~/models/password.server.ts';
 import { resetDB } from 'test/utils.ts';
+import { createId } from '@paralleldrive/cuid2';
 
 export const test = base.extend({
   // Extend the base test with a new "login" method.
   pageWithUser: async ({ page }, use) => {
-    const user = await createUser(username);
+    const id = createId();
+    const user = await createUserOrThrow(username, id);
     await addPasswordToUser(user.id, password);
     await use(page);
   },
   loggedInPage: async ({ page }, use) => {
     // TODO: login by setting session cookie directly instead of entering password
     //       to test for users that only uses passkey
-    const user = await createUser(username);
+    const id = createId();
+    const user = await createUserOrThrow(username, id);
     await addPasswordToUser(user.id, password);
     await page.goto('/login/password');
     await page.getByLabel(/username/i).fill(username);

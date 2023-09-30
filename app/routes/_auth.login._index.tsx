@@ -1,27 +1,30 @@
-import { type DataFunctionArgs, type LoaderArgs, type V2_MetaFunction } from '@remix-run/node';
+import {
+  type DataFunctionArgs,
+  type LoaderArgs,
+  type V2_MetaFunction,
+  json,
+} from '@remix-run/node';
 import { Form, Link, useActionData, useLoaderData } from '@remix-run/react';
-import { handleFormSubmit, type WebAuthnOptionsResponse } from 'remix-auth-webauthn';
+import { handleFormSubmit } from '~/services/webauthn.ts';
 
 import { authenticator } from '~/services/auth.server.ts';
 import AuthContainer from '~/components/AuthContainer.tsx';
 import AuthButton from '~/components/AuthButton.tsx';
 import AuthErrorMessage from '~/components/AuthErrorMessage.tsx';
+import { generateAuthenticationOptions } from '@simplewebauthn/server';
+import { getSession, sessionStorage } from '~/services/session.server.ts';
 
 export async function loader({ request }: LoaderArgs) {
   await authenticator.isAuthenticated(request, { successRedirect: '/' });
-  // When we pass a GET request to the authenticator, it will
-  // throw a response that includes the WebAuthn options and
-  // stores the challenge on session storage. To avoid needing
-  // a CatchBoundary, we catch the response here and return it as
-  // loader data.
-  try {
-    await authenticator.authenticate('webauthn', request);
-  } catch (response) {
-    if (response instanceof Response && response.status === 200) {
-      return response;
-    }
-    throw response;
-  }
+  const options = await generateAuthenticationOptions({ userVerification: 'preferred' });
+  const session = await getSession(request);
+  session.set('challenge', options.challenge);
+  return json(options, {
+    headers: {
+      'Set-Cookie': await sessionStorage.commitSession(session),
+      'Cache-Control': 'no-store',
+    },
+  });
 }
 
 export async function action({ request }: DataFunctionArgs) {
@@ -43,7 +46,7 @@ export const meta: V2_MetaFunction = () => {
 };
 
 export default function LoginPage() {
-  const options = useLoaderData<WebAuthnOptionsResponse>();
+  const options = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   return (
