@@ -5,7 +5,7 @@ import { createUserOrThrow } from './user.server.ts';
 describe('addPasswordToUser', () => {
   it('should add password to user', async () => {
     const user = await createUserOrThrow('test', 'testid');
-    await addPasswordToUser(user.id, 'test');
+    await addPasswordToUser(user.id, 'Test0000');
     const userWithPassword = await prisma.user.findUnique({
       where: { name: 'test' },
       include: {

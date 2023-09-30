@@ -26,13 +26,13 @@ describe('deleteUserByName', () => {
 describe('verifyLogin', () => {
   it('should return user if login success', async () => {
     const user = await createUserOrThrow('test', 'testid');
-    await addPasswordToUser(user.id, 'test');
+    await addPasswordToUser(user.id, 'Test0000');
     const userWithPass = await verifyPasswordLogin('test', 'test');
     expect(userWithPass).not.toBeNull();
   });
   it('should throw if login failed', async () => {
     const user = await createUserOrThrow('test', 'testid');
-    await addPasswordToUser(user.id, 'test');
+    await addPasswordToUser(user.id, 'Test0000');
     expect(verifyPasswordLogin('test', 'wrong password')).rejects.toThrow();
     expect(verifyPasswordLogin('wrong username', 'test')).rejects.toThrow();
   });

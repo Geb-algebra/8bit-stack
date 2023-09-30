@@ -5,10 +5,19 @@ import { prisma } from '~/db.server.ts';
 
 export type { Password };
 
+export function validatePassword(password: string) {
+  if (password.length < 8) throw new Error('password must be at least 8 characters');
+  if (password.length > 128) throw new Error('password must be less than 128 characters');
+  if (!/[a-z]/.test(password)) throw new Error('password must contain a lowercase letter');
+  if (!/[A-Z]/.test(password)) throw new Error('password must contain an uppercase letter');
+  if (!/[0-9]/.test(password)) throw new Error('password must contain a number');
+}
+
 /**
  * add a password to a user
  */
-export async function addPasswordToUser(userId: string, password: Password['hash']) {
+export async function addPasswordToUser(userId: string, password: string) {
+  validatePassword(password);
   const hashedPassword = await bcrypt.hash(password, 10);
 
   return prisma.password.create({
@@ -49,6 +58,7 @@ export async function verifyPasswordLogin(name: User['name'], password: Password
 }
 
 export async function updatePassword(userId: User['id'], password: Password['hash']) {
+  validatePassword(password);
   const hashedPassword = await bcrypt.hash(password, 10);
   return prisma.password.update({
     where: { userId },
@@ -56,4 +66,11 @@ export async function updatePassword(userId: User['id'], password: Password['has
       hash: hashedPassword,
     },
   });
+}
+
+export async function hasPassword(userId: User['id']) {
+  const password = await prisma.password.findUnique({
+    where: { userId },
+  });
+  return !!password;
 }

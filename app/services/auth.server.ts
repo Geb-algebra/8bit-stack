@@ -8,7 +8,11 @@ import {
   getAuthenticators,
   addAuthenticatorToUser,
 } from '~/models/authenticator.server.ts';
-import { addPasswordToUser, verifyPasswordLogin } from '~/models/password.server.ts';
+import {
+  addPasswordToUser,
+  validatePassword,
+  verifyPasswordLogin,
+} from '~/models/password.server.ts';
 import { type User, getUserByName, createUserOrThrow, getUserById } from '~/models/user.server.ts';
 
 import { WebAuthnStrategy } from '~/services/webauthn-strategy.server.ts';
@@ -92,6 +96,7 @@ authenticator.use(
       const userId = form.get('user-id');
       if (!userId) throw new Error('user id is required');
       invariant(typeof userId === 'string', 'user id must be a string');
+      validatePassword(password);
       const user = await createUserOrThrow(username, userId);
       await addPasswordToUser(user.id, password);
       return user;
