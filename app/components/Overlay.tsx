@@ -29,7 +29,7 @@ export default function Overlay(props: {
     <>
       {props.isShown ? (
         <div
-          className="absolute left-0 top-0 w-screen h-screen backdrop-brightness-50 z-50 flex place-content-center"
+          className="fixed left-0 top-0 w-full h-screen backdrop-brightness-50 z-50 flex place-content-center"
           onClick={() => props.setIsShown(false)}
         >
           <div className="my-auto" onClick={(e) => e.stopPropagation()}>

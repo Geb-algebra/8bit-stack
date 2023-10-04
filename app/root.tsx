@@ -1,19 +1,17 @@
 import { cssBundleHref } from '@remix-run/css-bundle';
 import type { LinksFunction } from '@remix-run/node';
 import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration } from '@remix-run/react';
-import { Suspense, lazy } from 'react';
 import stylesheet from '~/styles/tailwind.css';
+import rdtStylesheet from 'remix-development-tools/index.css';
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: 'stylesheet', href: cssBundleHref }] : []),
   { rel: 'stylesheet', href: stylesheet },
   { rel: 'stylesheet', href: 'https://fonts.googleapis.com/icon?family=Material+Icons' },
+  ...(process.env.NODE_ENV === 'development' ? [{ rel: 'stylesheet', href: rdtStylesheet }] : []),
 ];
 
-const RemixDevTools =
-  process.env.NODE_ENV === 'development' ? lazy(() => import('remix-development-tools')) : null;
-
-export default function App() {
+function App() {
   return (
     <html lang="en">
       <head>
@@ -27,12 +25,15 @@ export default function App() {
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
-        {RemixDevTools ? (
-          <Suspense>
-            <RemixDevTools />
-          </Suspense>
-        ) : null}
       </body>
     </html>
   );
 }
+
+let AppExport = App;
+// This imports the dev tools only if you're in development
+if (process.env.NODE_ENV === 'development') {
+  const { withDevTools } = await import('remix-development-tools');
+  AppExport = withDevTools(AppExport);
+}
+export default AppExport;

@@ -16,7 +16,7 @@ export default function Input(props: {
         name={props.name}
         id={props.id}
         type={props.type}
-        className="w-full border px-2 py-1 h-10 rounded-lg"
+        className={'w-full border px-2 py-1 h-10 rounded-lg ' + props.className ?? ''}
         disabled={props.disabled ?? false}
         value={props.value}
       />

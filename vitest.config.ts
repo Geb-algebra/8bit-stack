@@ -6,7 +6,6 @@ import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
-  // @ts-expect-error their types are wrong
   plugins: [react(), tsconfigPaths()],
   test: {
     include: ['./app/**/*.test.{ts,tsx}'],
