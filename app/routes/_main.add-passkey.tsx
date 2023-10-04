@@ -1,4 +1,4 @@
-import type { ActionArgs, LoaderArgs, V2_MetaFunction } from '@remix-run/node';
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
 import { useLoaderData, useActionData, Form } from '@remix-run/react';
 import { generateRegistrationOptions } from '@simplewebauthn/server';
@@ -18,7 +18,7 @@ import {
 import { handleFormSubmit } from '~/services/webauthn.ts';
 import { getRequiredStringFromFormData } from '~/utils.ts';
 
-export async function loader({ request }: LoaderArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
   // When we pass a GET request to the authenticator, it will
   // throw a response that includes the WebAuthn options and
@@ -42,7 +42,7 @@ export async function loader({ request }: LoaderArgs) {
   return json(options);
 }
 
-export async function action({ request }: ActionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
   const expectedChallenge = (await getUserById(user.id))?.expectedChallenge ?? '';
   console.log(expectedChallenge);
@@ -66,7 +66,7 @@ export async function action({ request }: ActionArgs) {
   }
 }
 
-export const meta: V2_MetaFunction = () => {
+export const meta: MetaFunction = () => {
   return [{ title: 'Add a new Passkey' }];
 };
 

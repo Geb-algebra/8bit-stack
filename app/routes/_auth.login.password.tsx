@@ -1,4 +1,4 @@
-import type { ActionArgs, LoaderArgs, V2_MetaFunction } from '@remix-run/node';
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { Form, useActionData } from '@remix-run/react';
 import AuthButton from '~/components/AuthButton.tsx';
@@ -8,14 +8,14 @@ import AuthFormInput from '~/components/AuthFormInput.tsx';
 
 import { authenticator } from '~/services/auth.server.ts';
 
-export async function loader({ request }: LoaderArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
   await authenticator.isAuthenticated(request, {
     successRedirect: '/',
   });
   return json({});
 }
 
-export async function action({ request }: ActionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
   try {
     await authenticator.authenticate('user-pass', request, {
       successRedirect: '/',
@@ -29,7 +29,7 @@ export async function action({ request }: ActionArgs) {
   return null;
 }
 
-export const meta: V2_MetaFunction = () => {
+export const meta: MetaFunction = () => {
   return [{ title: 'Login' }];
 };
 

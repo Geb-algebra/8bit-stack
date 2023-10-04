@@ -1,7 +1,7 @@
 import {
   type DataFunctionArgs,
-  type LoaderArgs,
-  type V2_MetaFunction,
+  type LoaderFunctionArgs,
+  type MetaFunction,
   json,
 } from '@remix-run/node';
 import { Form, Link, useActionData, useLoaderData } from '@remix-run/react';
@@ -14,7 +14,7 @@ import AuthErrorMessage from '~/components/AuthErrorMessage.tsx';
 import { generateAuthenticationOptions } from '@simplewebauthn/server';
 import { getSession, sessionStorage } from '~/services/session.server.ts';
 
-export async function loader({ request }: LoaderArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
   await authenticator.isAuthenticated(request, { successRedirect: '/' });
   const options = await generateAuthenticationOptions({ userVerification: 'preferred' });
   const session = await getSession(request);
@@ -41,7 +41,7 @@ export async function action({ request }: DataFunctionArgs) {
   return null;
 }
 
-export const meta: V2_MetaFunction = () => {
+export const meta: MetaFunction = () => {
   return [{ title: 'Log In' }];
 };
 

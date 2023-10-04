@@ -1,8 +1,8 @@
 import {
   json,
   type DataFunctionArgs,
-  type LoaderArgs,
-  type V2_MetaFunction,
+  type LoaderFunctionArgs,
+  type MetaFunction,
   redirect,
 } from '@remix-run/node';
 import { Form, useActionData, useLoaderData } from '@remix-run/react';
@@ -20,7 +20,7 @@ import { createId } from '@paralleldrive/cuid2';
 import { getRequiredStringFromFormData } from '~/utils.ts';
 import PasskeyHero from '~/components/PasskeyHero.tsx';
 
-export async function loader({ request }: LoaderArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
   await authenticator.isAuthenticated(request, { successRedirect: '/' });
 
   const session = await getSession(request);
@@ -69,7 +69,7 @@ export async function action({ request }: DataFunctionArgs) {
   return null;
 }
 
-export const meta: V2_MetaFunction = () => {
+export const meta: MetaFunction = () => {
   return [{ title: 'Sign Up' }];
 };
 

@@ -1,4 +1,9 @@
-import type { ActionArgs, LoaderArgs, SerializeFrom, V2_MetaFunction } from '@remix-run/node';
+import type {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  SerializeFrom,
+  MetaFunction,
+} from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
 import { useLoaderData, useFetcher, Link } from '@remix-run/react';
 import { useState } from 'react';
@@ -24,7 +29,7 @@ import { getRequiredStringFromFormData } from '~/utils.ts';
 import AuthButton from '~/components/AuthButton.tsx';
 import PasskeyHero from '~/components/PasskeyHero.tsx';
 
-export async function loader({ request }: LoaderArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
   return json({
     user,
@@ -33,7 +38,7 @@ export async function loader({ request }: LoaderArgs) {
   });
 }
 
-export async function action({ request }: ActionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
   const formData = await request.formData();
   const targetResource = formData.get('target-resource');
@@ -109,7 +114,7 @@ export async function action({ request }: ActionArgs) {
   }
 }
 
-export const meta: V2_MetaFunction = () => {
+export const meta: MetaFunction = () => {
   return [{ title: 'Settings' }];
 };
 

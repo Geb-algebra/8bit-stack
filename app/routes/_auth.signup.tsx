@@ -1,8 +1,8 @@
-import type { V2_MetaFunction } from '@remix-run/node';
+import type { MetaFunction } from '@remix-run/node';
 import { Link } from '@remix-run/react';
 import { Outlet } from 'react-router-dom';
 
-export const meta: V2_MetaFunction = () => {
+export const meta: MetaFunction = () => {
   return [{ title: 'Sign Up' }];
 };
 
