@@ -6,10 +6,26 @@ import morgan from 'morgan';
 import closeWithGrace from 'close-with-grace';
 import { createRequestHandler } from '@remix-run/express';
 
-import * as remixBuild from '../build/index.js';
-import { type ServerBuild, broadcastDevReady } from '@remix-run/node';
+import type { ServerBuild as _ServerBuild } from '@remix-run/server-runtime';
+import { type ServerBuild, broadcastDevReady, installGlobals } from '@remix-run/node';
 
-const build = remixBuild as unknown as ServerBuild;
+installGlobals();
+
+const BUILD_PATH = '../build/index.js';
+const build = (await import(BUILD_PATH)) as unknown as ServerBuild;
+
+let devBuild = build as unknown as _ServerBuild;
+let devToolsConfig = null;
+// Make sure you guard this with NODE_ENV check
+if (process.env.NODE_ENV === 'development') {
+  const { withServerDevTools, defineServerConfig } = await import('remix-development-tools/server');
+  // Allows you to define the configuration for the dev tools
+  devToolsConfig = defineServerConfig({
+    //... your config here ...
+  });
+  // wrap the build with the dev tools
+  devBuild = withServerDevTools(build as unknown as _ServerBuild, devToolsConfig);
+}
 
 const app = express();
 
@@ -28,7 +44,13 @@ app.use(morgan('tiny')); // logging
 
 const httpServer = createServer(app);
 
-app.all('*', createRequestHandler({ build, mode: process.env.NODE_ENV }));
+app.all(
+  '*',
+  createRequestHandler({
+    build: process.env.NODE_ENV === 'development' ? (devBuild as unknown as ServerBuild) : build,
+    mode: process.env.NODE_ENV,
+  }),
+);
 
 const PORT = process.env.PORT || 3000;
 
