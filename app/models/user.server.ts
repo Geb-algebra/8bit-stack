@@ -1,6 +1,4 @@
-import type { Password, User } from '@prisma/client';
-import bcrypt from 'bcryptjs';
-import type { Authenticator } from 'remix-auth-webauthn';
+import type { User } from '@prisma/client';
 
 import { prisma } from '~/db.server.ts';
 
@@ -15,100 +13,31 @@ export async function getUserByName(name: User['name']) {
 }
 
 /**
- * create a new user with it
+ * create a new user with the given name
  *
  * note that this function create no password or authenticator for the user
  * @param name user name
- * @param password password before hashing
+ * @throws {Error} if the name is already taken
  * @returns created user
  */
-export async function createUser(name: User['name']) {
+export async function createUserOrThrow(name: User['name'], id: User['id']) {
   const existingUser = await prisma.user.findUnique({ where: { name } });
-  if (existingUser) {
-    throw new Error('username already taken');
-  }
+  if (existingUser) throw new Error('username already taken');
   const user = await prisma.user.create({
-    data: { name },
+    data: { id, name },
   });
   console.info('new user created:', user);
   return user;
-}
-
-/**
- * add a password to a user
- */
-export async function addPasswordToUser(userId: string, password: Password['hash']) {
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  return prisma.password.create({
-    data: {
-      hash: hashedPassword,
-      user: {
-        connect: {
-          id: userId,
-        },
-      },
-    },
-  });
-}
-
-/**
- * add an authenticator to a user
- * @param userId user id
- * @param authenticator authenticator object
- */
-export async function addAuthenticatorToUser(
-  userId: string,
-  authenticator: Omit<Authenticator, 'userId'>,
-) {
-  return prisma.authenticator.create({
-    data: {
-      ...authenticator,
-      user: {
-        connect: {
-          id: userId,
-        },
-      },
-    },
-  });
 }
 
 export async function deleteUserByName(name: User['name']) {
   return prisma.user.delete({ where: { name } });
 }
 
-/**
- * check if a user can login.
- * @param name user name
- * @param password hashed password
- * @returns user without password
- * @throws {Error} if user not found, or password is invalid
- */
-export async function verifyPasswordLogin(name: User['name'], password: Password['hash']) {
-  const userWithPassword = await prisma.user.findUnique({
-    where: { name },
-    include: {
-      password: true,
-    },
+export async function setExpectedChallengeToUser(id: User['id'], expectedChallenge: string) {
+  const user = await prisma.user.update({
+    where: { id },
+    data: { expectedChallenge },
   });
-
-  if (!userWithPassword) throw new Error('user not found');
-  if (!userWithPassword.password) throw new Error('user has no password');
-
-  const isValid = await bcrypt.compare(password, userWithPassword.password.hash);
-  if (!isValid) throw new Error('invalid password');
-
-  const { password: _password, ...userWithoutPassword } = userWithPassword;
-  return userWithoutPassword;
-}
-
-export async function updatePassword(userId: User['id'], password: Password['hash']) {
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  return prisma.password.update({
-    where: { userId },
-    data: {
-      hash: hashedPassword,
-    },
-  });
+  return user;
 }

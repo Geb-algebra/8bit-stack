@@ -1,15 +1,15 @@
 import type { ActionArgs, LoaderArgs, V2_MetaFunction } from '@remix-run/node';
-import invariant from 'tiny-invariant';
 
 import { json, redirect } from '@remix-run/node';
 import { Form, useActionData } from '@remix-run/react';
 import AuthFormInput from '~/components/AuthFormInput.tsx';
 
 import { authenticator, isUsernameAvailable } from '~/services/auth.server.ts';
-import { getSession } from '~/services/session.server.ts';
+import { getSession, sessionStorage } from '~/services/session.server.ts';
 import AuthContainer from '~/components/AuthContainer.tsx';
 import AuthButton from '~/components/AuthButton.tsx';
 import AuthErrorMessage from '~/components/AuthErrorMessage.tsx';
+import { getRequiredStringFromFormData } from '~/utils.ts';
 
 export async function loader({ request }: LoaderArgs) {
   await authenticator.isAuthenticated(request, {
@@ -20,14 +20,16 @@ export async function loader({ request }: LoaderArgs) {
 
 export async function action({ request }: ActionArgs) {
   try {
-    const cloneData = await request.clone().formData();
-    const username = cloneData.get('username');
-    if (!username) throw new Error('username is required');
-    invariant(typeof username === 'string', 'username must be a string');
+    const formData = await request.formData();
+    const username = getRequiredStringFromFormData(formData, 'username');
     if (!(await isUsernameAvailable(username))) throw new Error('username already taken');
     const session = await getSession(request);
     session.set('username', username);
-    return redirect(`/signup/pass?username=${username}`);
+    return redirect('/signup/pass', {
+      headers: {
+        'Set-Cookie': await sessionStorage.commitSession(session),
+      },
+    });
   } catch (error) {
     // Because redirects work by throwing a Response, you need to check if the
     // caught error is a response and return it or throw it again
