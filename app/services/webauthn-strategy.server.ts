@@ -50,6 +50,9 @@ export interface WebAuthnOptionsResponse {
 /**
  * This interface declares what configuration the strategy needs from the
  * developer to correctly work.
+ *
+ * this is a slightly modified version of the remix-auth-webauthn
+ * https://github.com/alexanderson1993/remix-auth-webauthn
  */
 export interface WebAuthnOptions<User> {
   /**

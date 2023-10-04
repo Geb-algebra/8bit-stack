@@ -6,6 +6,7 @@ import type { RegistrationResponseJSON } from '@simplewebauthn/typescript-types'
 import AuthButton from '~/components/AuthButton.tsx';
 import AuthContainer from '~/components/AuthContainer.tsx';
 import AuthErrorMessage from '~/components/AuthErrorMessage.tsx';
+import PasskeyHero from '~/components/PasskeyHero.tsx';
 import { addAuthenticatorToUser } from '~/models/authenticator.server.ts';
 import { getUserById, setExpectedChallengeToUser } from '~/models/user.server.ts';
 import {
@@ -84,6 +85,7 @@ export default function Page() {
                 Create a New Passkey
               </AuthButton>
             </Form>
+            <PasskeyHero />
           </AuthContainer>
         </div>
       </div>

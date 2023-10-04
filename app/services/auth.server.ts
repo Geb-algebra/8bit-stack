@@ -17,6 +17,7 @@ import { type User, getUserByName, createUserOrThrow, getUserById } from '~/mode
 
 import { WebAuthnStrategy } from '~/services/webauthn-strategy.server.ts';
 import { getSession, sessionStorage } from '~/services/session.server.ts';
+import { getRequiredStringFromFormData } from '~/utils.ts';
 
 export let authenticator = new Authenticator<User>(sessionStorage);
 
@@ -85,17 +86,11 @@ authenticator.use(
 
 authenticator.use(
   new FormStrategy(async ({ form }) => {
-    const username = form.get('username');
-    const password = form.get('password');
-    if (!username) throw new Error('username is required');
-    if (!password) throw new Error('password is required');
-    invariant(typeof username === 'string', 'username must be a string');
-    invariant(typeof password === 'string', 'password must be a string');
+    const username = getRequiredStringFromFormData(form, 'username');
+    const password = getRequiredStringFromFormData(form, 'password');
     const type = form.get('type');
     if (type === 'registration') {
-      const userId = form.get('user-id');
-      if (!userId) throw new Error('user id is required');
-      invariant(typeof userId === 'string', 'user id must be a string');
+      const userId = getRequiredStringFromFormData(form, 'user-id');
       validatePassword(password);
       const user = await createUserOrThrow(username, userId);
       await addPasswordToUser(user.id, password);

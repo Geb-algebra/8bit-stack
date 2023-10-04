@@ -32,7 +32,7 @@ export default function Index() {
           </Link>
         </div>
       </Overlay>
-      <div className="w-screen">
+      <div className="w-full">
         <nav className="w-full h-16 flex justify-between items-center bg-white border-b border-gray-300">
           <Link to="/">
             <h1 className="text-2xl font-bold mx-6">8bit stack</h1>

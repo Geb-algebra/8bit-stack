@@ -22,6 +22,7 @@ import {
 } from '~/models/password.server.ts';
 import { getRequiredStringFromFormData } from '~/utils.ts';
 import AuthButton from '~/components/AuthButton.tsx';
+import PasskeyHero from '~/components/PasskeyHero.tsx';
 
 export async function loader({ request }: LoaderArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
@@ -92,8 +93,9 @@ export async function action({ request }: ActionArgs) {
       if (newPassword !== confirmNewPassword) {
         return { errorMessage: 'New password and confirm new password must match.' };
       }
+      await updatePassword(user.id, newPassword);
       try {
-        await updatePassword(user.id, newPassword);
+        await addPasswordToUser(user.id, newPassword);
       } catch (error) {
         if (error instanceof Error) {
           return { errorMessage: error.message };
@@ -242,6 +244,7 @@ export default function Page() {
           >
             Add Passkey
           </Link>
+          <PasskeyHero />
         </div>
         <div className="flex flex-col gap-6 pt-6">
           <p className="text-2xl font-bold">{`${

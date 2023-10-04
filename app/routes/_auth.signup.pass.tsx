@@ -18,6 +18,7 @@ import { handleFormSubmit } from '~/services/webauthn.ts';
 import { getSession, sessionStorage } from '~/services/session.server.ts';
 import { createId } from '@paralleldrive/cuid2';
 import { getRequiredStringFromFormData } from '~/utils.ts';
+import PasskeyHero from '~/components/PasskeyHero.tsx';
 
 export async function loader({ request }: LoaderArgs) {
   await authenticator.isAuthenticated(request, { successRedirect: '/' });
@@ -97,6 +98,7 @@ export default function LoginPage() {
           <AuthButton type="submit" value="registration">
             Sign Up with Passkey
           </AuthButton>
+          <PasskeyHero className="mt-6" />
         </Form>
         <p className="h-6 text-center">or</p>
         <Form method="post" className="flex flex-col gap-6">
