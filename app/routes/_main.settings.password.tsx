@@ -1,7 +1,12 @@
 import { redirect, type LoaderFunctionArgs, type ActionFunctionArgs, json } from '@remix-run/node';
 import invariant from 'tiny-invariant';
 import { AccountRepository } from '~/models/account.server.ts';
-import { authenticator, getHashedPassword, verifyPassword } from '~/services/auth.server.ts';
+import {
+  authenticator,
+  getHashedPassword,
+  validatePassword,
+  verifyPassword,
+} from '~/services/auth.server.ts';
 import { getRequiredStringFromFormData } from '~/utils.ts';
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -26,23 +31,15 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
   const account = await AccountRepository.getById(user.id);
-  if (method === 'post') {
-    try {
-      account.passwordHash = await getHashedPassword(newPassword);
-      await AccountRepository.save(account);
-    } catch (error) {
-      if (error instanceof Error) {
-        return json({ errorMessage: error.message }, { status: 400 });
-      } else {
-        throw error;
-      }
-    }
-  } else if (method === 'put') {
+  if (method === 'put') {
     const oldPassword = getRequiredStringFromFormData(formData, 'old-password');
     if (!(await verifyPassword(oldPassword, account.passwordHash ?? ''))) {
       return json({ errorMessage: 'Old password is incorrect.' }, { status: 400 });
     }
+  }
+  if (['post', 'put'].includes(method)) {
     try {
+      validatePassword(newPassword);
       account.passwordHash = await getHashedPassword(newPassword);
       await AccountRepository.save(account);
     } catch (error) {

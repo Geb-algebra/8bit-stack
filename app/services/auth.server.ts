@@ -42,11 +42,11 @@ export function validatePassword(password: string) {
 // we reuse them to add new passkeys to authenticated users
 export const WEBAUTHN_RP_NAME = '8bit Stack';
 export const WEBAUTHN_RP_ID =
-  process.env.NODE_ENV === 'development' ? 'localhost' : process.env.APP_URL!;
+  process.env.NODE_ENV === 'development' ? 'localhost' : process.env.APP_DOMAIN!;
 export const WEBAUTHN_ORIGIN =
   process.env.NODE_ENV === 'development'
     ? `http://localhost:${process.env.PORT ?? 3000}`
-    : process.env.APP_URL!;
+    : `https://${process.env.APP_DOMAIN!}`;
 
 authenticator.use(
   new WebAuthnStrategy(
