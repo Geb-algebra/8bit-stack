@@ -3,7 +3,7 @@ import { authenticator } from '~/services/auth.server.ts';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await authenticator.isAuthenticated(request, {
-    failureRedirect: '/login',
+    failureRedirect: '/welcome',
   });
   return json({});
 }
