@@ -5,11 +5,9 @@ import { useState } from 'react';
 import AuthFormInput from '~/components/AuthFormInput.tsx';
 import Icon from '~/components/Icon.tsx';
 import Overlay from '~/components/Overlay.tsx';
-import { getAuthenticators } from '~/models/authenticator.server.ts';
-import { type User } from '~/models/user.server.ts';
+import type { Authenticator } from '~/models/authenticator.server.ts';
+import { AccountRepository, type User } from '~/models/account.server.ts';
 import { authenticator } from '~/services/auth.server.ts';
-import type { TransportsSplitAuthenticator } from '~/models/authenticator.server.ts';
-import { hasPassword } from '~/models/password.server.ts';
 import AuthButton from '~/components/AuthButton.tsx';
 import PasskeyHero from '~/components/PasskeyHero.tsx';
 
@@ -18,10 +16,11 @@ import type { action as passwordAction } from '~/routes/_main.settings.password.
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
+  const account = await AccountRepository.getById(user.id);
   return json({
     user,
-    authenticators: await getAuthenticators(user),
-    hasPassword: await hasPassword(user.id),
+    authenticators: account.authenticators,
+    hasPassword: account.passwordHash !== null,
   });
 }
 
@@ -29,7 +28,7 @@ export const meta: MetaFunction = () => {
   return [{ title: 'Settings' }];
 };
 
-function Passkey(props: { authenticator: SerializeFrom<TransportsSplitAuthenticator> }) {
+function Passkey(props: { authenticator: SerializeFrom<Authenticator> }) {
   const fetcher = useFetcher<typeof passkeyAction>();
   const [isPasskeyEditing, setIsPasskeyEditing] = useState(false);
   const [isPasskeyDeleting, setIsPasskeyDeleting] = useState(false);
@@ -41,7 +40,10 @@ function Passkey(props: { authenticator: SerializeFrom<TransportsSplitAuthentica
       <div className="mr-auto">
         <p>{props.authenticator.name ?? 'Unnamed'}</p>
         <p className="text-gray-500">
-          Created at {new Date(props.authenticator.createdAt).toLocaleString()}
+          Created at{' '}
+          {props.authenticator.createdAt
+            ? new Date(props.authenticator.createdAt).toLocaleString()
+            : 'Unknown'}
         </p>
       </div>
       <button onClick={() => setIsPasskeyEditing(true)}>

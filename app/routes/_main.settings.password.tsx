@@ -1,11 +1,7 @@
 import { redirect, type LoaderFunctionArgs, type ActionFunctionArgs, json } from '@remix-run/node';
 import invariant from 'tiny-invariant';
-import {
-  addPasswordToUser,
-  updatePassword,
-  verifyPasswordLogin,
-} from '~/models/password.server.ts';
-import { authenticator } from '~/services/auth.server.ts';
+import { AccountRepository } from '~/models/account.server.ts';
+import { authenticator, getHashedPassword, verifyPassword } from '~/services/auth.server.ts';
 import { getRequiredStringFromFormData } from '~/utils.ts';
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -29,9 +25,11 @@ export async function action({ request }: ActionFunctionArgs) {
       { status: 400 },
     );
   }
+  const account = await AccountRepository.getById(user.id);
   if (method === 'post') {
     try {
-      await addPasswordToUser(user.id, newPassword);
+      account.passwordHash = await getHashedPassword(newPassword);
+      await AccountRepository.save(account);
     } catch (error) {
       if (error instanceof Error) {
         return json({ errorMessage: error.message }, { status: 400 });
@@ -41,19 +39,12 @@ export async function action({ request }: ActionFunctionArgs) {
     }
   } else if (method === 'put') {
     const oldPassword = getRequiredStringFromFormData(formData, 'old-password');
-    try {
-      await verifyPasswordLogin(user.name, oldPassword);
-    } catch (error) {
-      if (error instanceof Error) {
-        return json({ errorMessage: error.message }, { status: 400 });
-      } else {
-        throw error;
-      }
+    if (!(await verifyPassword(oldPassword, account.passwordHash ?? ''))) {
+      return json({ errorMessage: 'Old password is incorrect.' }, { status: 400 });
     }
-
-    await updatePassword(user.id, newPassword);
     try {
-      await addPasswordToUser(user.id, newPassword);
+      account.passwordHash = await getHashedPassword(newPassword);
+      await AccountRepository.save(account);
     } catch (error) {
       if (error instanceof Error) {
         return json({ errorMessage: error.message }, { status: 400 });
