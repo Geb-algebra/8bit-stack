@@ -53,8 +53,8 @@ test.describe('login', () => {
     await loggedInPage.goto('/login');
     await expect(loggedInPage).toHaveURL('/');
   });
-  test('redirect to login page if not logged in', async ({ page }) => {
+  test('redirect to landing page if not logged in', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveURL('/login');
+    await expect(page).toHaveURL('/welcome');
   });
 });

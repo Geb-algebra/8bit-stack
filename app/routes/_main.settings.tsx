@@ -15,7 +15,7 @@ import type { action as passkeyAction } from '~/routes/_main.settings.passkey.ts
 import type { action as passwordAction } from '~/routes/_main.settings.password.tsx';
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
+  const user = await authenticator.isAuthenticated(request, { failureRedirect: '/welcome' });
   const account = await AccountRepository.getById(user.id);
   return json({
     user,

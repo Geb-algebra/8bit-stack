@@ -12,12 +12,12 @@ import { getRequiredStringFromFormData } from '~/utils.ts';
 export async function loader({ request }: LoaderFunctionArgs) {
   await authenticator.isAuthenticated(request, {
     successRedirect: '/settings',
-    failureRedirect: '/login',
+    failureRedirect: '/welcome',
   });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  const user = await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
+  const user = await authenticator.isAuthenticated(request, { failureRedirect: '/welcome' });
   const formData = await request.formData();
   const method = request.method.toLowerCase();
   invariant(['post', 'put'].includes(method), 'Method must be one of post, put');
