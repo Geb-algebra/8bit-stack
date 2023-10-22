@@ -7,8 +7,7 @@ import AuthButton from '~/components/AuthButton.tsx';
 import AuthContainer from '~/components/AuthContainer.tsx';
 import AuthErrorMessage from '~/components/AuthErrorMessage.tsx';
 import PasskeyHero from '~/components/PasskeyHero.tsx';
-import { addAuthenticatorToUser } from '~/models/authenticator.server.ts';
-import { getUserById, setExpectedChallengeToUser } from '~/models/user.server.ts';
+import { AccountRepository } from '~/models/account.server.ts';
 import {
   WEBAUTHN_RP_ID,
   WEBAUTHN_RP_NAME,
@@ -20,6 +19,7 @@ import { getRequiredStringFromFormData } from '~/utils.ts';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
+  const account = await AccountRepository.getById(user.id);
   // When we pass a GET request to the authenticator, it will
   // throw a response that includes the WebAuthn options and
   // stores the challenge on session storage. To avoid needing
@@ -38,14 +38,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
       userVerification: 'preferred',
     },
   });
-  await setExpectedChallengeToUser(user.id, options.challenge);
+  account.expectedChallenge = options.challenge;
+  await AccountRepository.save(account);
   return json(options);
 }
 
 export async function action({ request }: ActionFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
-  const expectedChallenge = (await getUserById(user.id))?.expectedChallenge ?? '';
-  console.log(expectedChallenge);
+  const account = await AccountRepository.getById(user.id);
+  const expectedChallenge = account.expectedChallenge;
+  if (!expectedChallenge) {
+    throw new Error('Expected challenge not found.');
+  }
   try {
     const formData = await request.formData();
     let data: RegistrationResponseJSON;
@@ -56,7 +60,9 @@ export async function action({ request }: ActionFunctionArgs) {
       throw new Error('Invalid passkey response JSON.');
     }
     const newAuthenticator = await verifyNewAuthenticator(data, expectedChallenge);
-    await addAuthenticatorToUser(user.id, newAuthenticator);
+    account.authenticators.push({ ...newAuthenticator, name: null });
+    account.expectedChallenge = null;
+    await AccountRepository.save(account);
     throw redirect('/settings');
   } catch (error) {
     if (error instanceof Response && error.status >= 400) {

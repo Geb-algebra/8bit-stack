@@ -18,12 +18,11 @@ interface WebAuthnAuthenticator {
 
 export interface Authenticator {
   credentialID: string;
-  userId: string;
   credentialPublicKey: string;
   counter: number;
   credentialDeviceType: string;
   credentialBackedUp: number;
-  transports: string;
+  transports: string[];
 }
 
 export interface UserDetails {
@@ -102,7 +101,7 @@ export interface WebAuthnOptions<User> {
  * to verify the user identity in their system.
  */
 export type WebAuthnVerifyParams = {
-  authenticator: Omit<Authenticator, 'userId'>;
+  authenticator: Authenticator;
   type: 'registration' | 'authentication';
   username: string | null;
   userId: string | null;
@@ -202,7 +201,7 @@ export class WebAuthnStrategy<User> extends Strategy<User, WebAuthnVerifyParams>
             ...authenticator,
             credentialPublicKey: Buffer.from(authenticator.credentialPublicKey, 'base64url'),
             credentialID: Buffer.from(authenticator.credentialID, 'base64url'),
-            transports: authenticator.transports.split(',') as AuthenticatorTransportFuture[],
+            transports: authenticator.transports as AuthenticatorTransportFuture[],
           },
         });
 

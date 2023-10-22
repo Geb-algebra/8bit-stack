@@ -1,12 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
 import invariant from 'tiny-invariant';
-import {
-  deleteAuthenticator,
-  getAuthenticators,
-  renameAuthenticator,
-} from '~/models/authenticator.server.ts';
-import { hasPassword } from '~/models/password.server.ts';
+import { AccountRepository } from '~/models/account.server.ts';
 import { authenticator } from '~/services/auth.server.ts';
 import { getRequiredStringFromFormData } from '~/utils.ts';
 
@@ -19,6 +14,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export async function action({ request }: ActionFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: '/login' });
+  const account = await AccountRepository.getById(user.id);
   const formData = await request.formData();
   const method = request.method.toLowerCase();
 
@@ -27,15 +23,19 @@ export async function action({ request }: ActionFunctionArgs) {
 
   if (method === 'put') {
     const name = getRequiredStringFromFormData(formData, 'passkey-name');
-    await renameAuthenticator(passkeyId, name);
+    const passkey = account.authenticators.find((a) => a.credentialID === passkeyId);
+    invariant(passkey, 'Passkey must exist');
+    passkey.name = name;
+    await AccountRepository.save(account);
   } else if (method === 'delete') {
-    if (!(await hasPassword(user.id)) && (await getAuthenticators(user)).length === 1) {
+    if (account.passwordHash === null && account.authenticators.length === 1) {
       return json(
         { errorMessage: 'You must have at least one passkey or password' },
         { status: 400 },
       );
     }
-    await deleteAuthenticator(passkeyId);
+    account.authenticators = account.authenticators.filter((a) => a.credentialID !== passkeyId);
+    await AccountRepository.save(account);
   }
   return redirect('/settings');
 }

@@ -3,27 +3,40 @@ import type { RegistrationResponseJSON } from '@simplewebauthn/typescript-types'
 import { Authenticator } from 'remix-auth';
 import { FormStrategy } from 'remix-auth-form';
 import invariant from 'tiny-invariant';
-import {
-  getAuthenticatorById,
-  getAuthenticators,
-  addAuthenticatorToUser,
-} from '~/models/authenticator.server.ts';
-import {
-  addPasswordToUser,
-  validatePassword,
-  verifyPasswordLogin,
-} from '~/models/password.server.ts';
-import { type User, getUserByName, createUserOrThrow, getUserById } from '~/models/user.server.ts';
+import bcrypt from 'bcryptjs';
+import { type User, AccountFactory, AccountRepository } from '~/models/account.server.ts';
+import { UserRepository } from '~/models/user.server.ts';
 
 import { WebAuthnStrategy } from '~/services/webauthn-strategy.server.ts';
 import { getSession, sessionStorage } from '~/services/session.server.ts';
 import { getRequiredStringFromFormData } from '~/utils.ts';
+import { getAuthenticatorById } from '~/models/authenticator.server.ts';
 
 export let authenticator = new Authenticator<User>(sessionStorage);
 
 export async function isUsernameAvailable(username: string) {
-  const user = await getUserByName(username);
-  return !user;
+  try {
+    await UserRepository.getByName(username);
+    return false;
+  } catch (error) {
+    return true;
+  }
+}
+
+export async function getHashedPassword(password: string): Promise<string> {
+  return await bcrypt.hash(password, 10);
+}
+
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  return await bcrypt.compare(password, hash);
+}
+
+export function validatePassword(password: string) {
+  if (password.length < 8) throw new Error('password must be at least 8 characters');
+  if (password.length > 128) throw new Error('password must be less than 128 characters');
+  if (!/[a-z]/.test(password)) throw new Error('password must contain a lowercase letter');
+  if (!/[A-Z]/.test(password)) throw new Error('password must contain an uppercase letter');
+  if (!/[0-9]/.test(password)) throw new Error('password must contain a number');
 }
 
 // we reuse them to add new passkeys to authenticated users
@@ -51,13 +64,19 @@ authenticator.use(
       // need to transform a CSV string into a list of strings at this step.
       getUserAuthenticators: async (user) => {
         if (!user) return [];
-        return await getAuthenticators(user);
+        const account = await AccountRepository.getById(user.id);
+        return account.authenticators.map((authenticator) => {
+          return {
+            ...authenticator,
+            transports: authenticator.transports,
+          };
+        });
       },
       // Transform the user object into the shape expected by the strategy.
       // You can use a regular username, the users email address, or something else.
       getUserDetails: (user) => ({ id: user!.id, username: user!.name }),
-      getUserByUsername: (username) => getUserByName(username),
-      getAuthenticatorById,
+      getUserByUsername: (username) => UserRepository.getByName(username),
+      getAuthenticatorById: (id) => getAuthenticatorById(id),
     },
     async ({ authenticator, type, username, userId }) => {
       const savedAuthenticator = await getAuthenticatorById(authenticator.credentialID);
@@ -68,13 +87,17 @@ authenticator.use(
         }
         invariant(userId, 'User id is required.');
         invariant(username, 'Username is required.');
-        const user = await createUserOrThrow(username, userId);
-        await addAuthenticatorToUser(user.id, authenticator);
+        const { passwordHash, authenticators, ...user } = await AccountFactory.create({
+          name: username,
+          id: userId,
+          authenticators: [{ ...authenticator, name: null }],
+        });
         return user;
       } else if (type === 'authentication') {
         if (!savedAuthenticator) throw new Error('Authenticator not found');
-        const user = await getUserById(savedAuthenticator.userId);
-        if (!user) throw new Error('User not found');
+        const { passwordHash, authenticators, ...user } = await AccountRepository.getById(
+          savedAuthenticator.userId,
+        );
         return user;
       } else {
         throw new Error('Invalid verification type');
@@ -92,11 +115,20 @@ authenticator.use(
     if (type === 'registration') {
       const userId = getRequiredStringFromFormData(form, 'user-id');
       validatePassword(password);
-      const user = await createUserOrThrow(username, userId);
-      await addPasswordToUser(user.id, password);
+      const {
+        passwordHash: _passwordHash,
+        authenticators,
+        ...user
+      } = await AccountFactory.create({
+        name: username,
+        id: userId,
+        passwordHash: await getHashedPassword(password),
+      });
       return user;
     } else if (type === 'authentication') {
-      const user = await verifyPasswordLogin(username, password);
+      const { passwordHash, authenticators, ...user } = await AccountRepository.getByName(username);
+      if (!(await verifyPassword(password, passwordHash ?? '')))
+        throw new Error('Invalid password');
       return user;
     } else {
       throw new Error('Invalid type');
@@ -134,7 +166,7 @@ export async function verifyNewAuthenticator(
       counter,
       credentialBackedUp: credentialBackedUp ? 1 : 0,
       credentialDeviceType,
-      transports: '',
+      transports: [''],
     };
     const savedAuthenticator = await getAuthenticatorById(newAuthenticator.credentialID);
     if (savedAuthenticator) {
