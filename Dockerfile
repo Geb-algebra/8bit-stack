@@ -4,10 +4,7 @@
 ARG NODE_VERSION=18.14.0
 FROM node:${NODE_VERSION}-slim as base
 
-# Remix/Prisma app lives here
 WORKDIR /app
-
-# Set production environment
 ENV NODE_ENV=production
 
 
@@ -24,10 +21,7 @@ RUN npx prisma generate
 
 # Copy application code
 COPY --link . .
-
-# Build application
 RUN npm run build
-
 # Remove development dependencies
 RUN npm prune --omit=dev
 
@@ -35,9 +29,12 @@ RUN npm prune --omit=dev
 # Final stage for app image
 FROM base
 
+# Install ca-certificates to support TLS, which is needed to connect to planetscale
+RUN apt-get update && apt-get install ca-certificates -y && rm -rf /var/lib/apt/lists/*
+
 # Copy built application
 COPY --from=build /app /app
 
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
-ENTRYPOINT [ "./start.sh" ]
+ENTRYPOINT [ "npm", "run", "start" ]

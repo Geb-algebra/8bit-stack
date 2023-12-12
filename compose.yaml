@@ -1,17 +1,6 @@
 version: '3'
 services:
-  mysql:
-    image: mysql:5.7
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-    ports:
-      - '3306:3306'
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: dev
-      TZ: 'Asia/Tokyo'
-    volumes:
-      - db-storage:/var/lib/mysql
-  remix:
+  prod:
     build: .
     environment:
       - HOST=0.0.0.0
@@ -21,12 +10,34 @@ services:
     ports:
       - 3000:3000
       - 5555:5555
-      - 8002:8002
-      - 9323:9323 # playwright reporter
+  dev:
+    image: node:18.14.0
+    environment:
+      - HOST=0.0.0.0
+      - DATABASE_URL
+      - SESSION_SECRET
+      - APP_URL
+    ports:
+      - 3000:3000
+      - 5555:5555
+      - 8080:8080 # remix DevTools websocket server
     volumes:
-      - ./.env:/app/.env
-    depends_on:
-      - mysql
-
-volumes:
-  db-storage:
+      - .:/8bit-stack
+    working_dir: /8bit-stack
+    command: bash
+  validate:
+    image: mcr.microsoft.com/playwright:v1.35.0-jammy
+    environment:
+      - HOST=0.0.0.0
+      - DATABASE_URL
+      - SESSION_SECRET
+      - APP_URL
+    volumes:
+      - .:/8bit-stack
+    ports:
+      - 3000:3000
+      - 5555:5555
+      - 8080:8080 # remix DevTools websocket server
+      - 9323:9323 # playwright reporter
+    working_dir: /8bit-stack
+    command: npm run validate

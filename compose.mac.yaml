@@ -1,6 +1,0 @@
-version: '3'
-services:
-  remix:
-    platform: linux/amd64
-  mysql:
-    platform: linux/amd64
