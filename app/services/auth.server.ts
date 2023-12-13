@@ -42,8 +42,8 @@ export function validatePassword(password: string) {
 // we reuse them to add new passkeys to authenticated users
 export const WEBAUTHN_RP_NAME = '8bit Stack';
 // http://localhost:3000 -> localhost, https://8bitstack.com -> 8bitstack.com
-export const WEBAUTHN_RP_ID = process.env.APP_URL?.split('://')[1].split(':')[0];
-export const WEBAUTHN_ORIGIN = process.env.APP_URL;
+export const WEBAUTHN_RP_ID = process.env.APP_URL!.split('://')[1].split(':')[0];
+export const WEBAUTHN_ORIGIN = process.env.APP_URL!;
 
 authenticator.use(
   new WebAuthnStrategy(

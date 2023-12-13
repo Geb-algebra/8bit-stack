@@ -1,20 +1,23 @@
 version: '3'
 services:
-  prod:
-    build: .
-    environment:
-      - HOST=0.0.0.0
-      - DATABASE_URL
-      - SESSION_SECRET
-      - APP_URL
+  mysql:
+    image: mysql:5.7
+    platform: linux/amd64
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     ports:
-      - 3000:3000
-      - 5555:5555
-  dev:
+      - '3306:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dev
+      TZ: 'Asia/Tokyo'
+    volumes:
+      - db-storage:/var/lib/mysql
+  local-dev:
     image: node:20.10.0
+    platform: linux/amd64
     environment:
       - HOST=0.0.0.0
-      - DATABASE_URL
+      - DATABASE_URL=mysql://root:root@mysql:3306/dev
       - SESSION_SECRET
       - APP_URL
     ports:
@@ -25,11 +28,14 @@ services:
       - .:/8bit-stack
     working_dir: /8bit-stack
     command: bash
+    depends_on:
+      - mysql
   validate:
     image: mcr.microsoft.com/playwright:v1.40.1-jammy
+    platform: linux/amd64
     environment:
       - HOST=0.0.0.0
-      - DATABASE_URL
+      - DATABASE_URL=mysql://root:root@mysql:3306/dev
       - SESSION_SECRET
       - APP_URL
     volumes:
@@ -41,3 +47,8 @@ services:
       - 9323:9323 # playwright reporter
     working_dir: /8bit-stack
     command: npm run validate
+    depends_on:
+      - mysql
+
+volumes:
+  db-storage:

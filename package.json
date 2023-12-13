@@ -7,7 +7,7 @@
     "build:remix": "remix build",
     "build:server": "tsx ./server/build-server.ts",
     "deploy": "fly deploy --remote-only",
-    "dev": "remix dev -c \"tsx --require ./mocks/index.ts ./server/index.ts\"",
+    "dev": "MOCKS=true remix dev -c \"tsx ./server/index.ts\"",
     "start": "NODE_ENV=production node ./server-build/index.js",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx .",
     "format": "prettier --write .",
@@ -77,6 +77,6 @@
     "vitest": "^0.34.6"
   },
   "engines": {
-    "node": "18"
+    "node": "20"
   }
 }
