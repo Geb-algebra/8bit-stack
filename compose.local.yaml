@@ -26,6 +26,7 @@ services:
       - 8080:8080 # remix DevTools websocket server
     volumes:
       - .:/8bit-stack
+      - node_modules:/8bit-stack/node_modules
     working_dir: /8bit-stack
     command: bash
     depends_on:
@@ -40,6 +41,7 @@ services:
       - APP_URL
     volumes:
       - .:/8bit-stack
+      - node_modules:/8bit-stack/node_modules
     ports:
       - 3000:3000
       - 5555:5555
@@ -52,3 +54,4 @@ services:
 
 volumes:
   db-storage:
+  node_modules:

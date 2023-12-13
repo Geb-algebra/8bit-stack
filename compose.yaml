@@ -23,6 +23,7 @@ services:
       - 8080:8080 # remix DevTools websocket server
     volumes:
       - .:/8bit-stack
+      - node_modules:/8bit-stack/node_modules
     working_dir: /8bit-stack
     command: bash
   validate:
@@ -34,6 +35,7 @@ services:
       - APP_URL
     volumes:
       - .:/8bit-stack
+      - node_modules:/8bit-stack/node_modules
     ports:
       - 3000:3000
       - 5555:5555
@@ -41,3 +43,5 @@ services:
       - 9323:9323 # playwright reporter
     working_dir: /8bit-stack
     command: npm run validate
+volumes:
+  node_modules:
