@@ -58,6 +58,11 @@ export default function LoginPage() {
             Log In with Passkey
           </AuthButton>
         </Form>
+        <Form method="post" action="/google">
+          <AuthButton type="submit" value="google">
+            Log In with Google
+          </AuthButton>
+        </Form>
         <p className="h-6 w-full text-center">or</p>
         <Link to="/login/password">
           <AuthButton>Log In with Password</AuthButton>

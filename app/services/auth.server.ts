@@ -11,6 +11,8 @@ import { WebAuthnStrategy } from '~/services/webauthn-strategy.server.ts';
 import { getSession, sessionStorage } from '~/services/session.server.ts';
 import { getRequiredStringFromFormData } from '~/utils.ts';
 import { getAuthenticatorById } from '~/models/authenticator.server.ts';
+import { GoogleStrategy } from 'remix-auth-google';
+import { c } from 'vitest/dist/reporters-5f784f42.js';
 
 export let authenticator = new Authenticator<User>(sessionStorage);
 
@@ -133,6 +135,30 @@ authenticator.use(
   }),
   'user-pass',
 );
+
+let googleStrategy = new GoogleStrategy(
+  {
+    clientID: process.env.GOOGLE_AUTH_CLIENT_ID!,
+    clientSecret: process.env.GOOGLE_AUTH_CLIENT_SECRET!,
+    callbackURL: `${process.env.APP_URL}/google/callback`,
+  },
+  async ({ accessToken, refreshToken, extraParams, profile }) => {
+    // Get the user data from your DB or API using the tokens and profile
+    let account;
+    try {
+      account = await AccountRepository.getByGoogleProfileId(profile.id);
+    } catch (error) {
+      account = await AccountFactory.create({
+        name: profile.displayName,
+        googleProfileId: profile.id,
+      });
+    }
+    const { passwordHash, authenticators, ...user } = account;
+    return user;
+  },
+);
+
+authenticator.use(googleStrategy, 'google');
 
 export async function getAuthErrorMessage(request: Request) {
   const session = await getSession(request);

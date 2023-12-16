@@ -27,11 +27,13 @@ export class AccountFactory {
   static async create({
     name,
     id,
+    googleProfileId,
     passwordHash,
     authenticators = [],
   }: {
     name: User['name'];
     id?: User['id'];
+    googleProfileId?: User['googleProfileId'];
     passwordHash?: string;
     authenticators?: Authenticator[];
   }): Promise<Account> {
@@ -42,6 +44,7 @@ export class AccountFactory {
       data: {
         id: id ?? (await this.generateId()),
         name,
+        googleProfileId,
       },
     });
     if (passwordHash) {
@@ -97,6 +100,29 @@ export class AccountRepository {
 
   static async getByName(name: Account['name']) {
     return await this._get({ name });
+  }
+
+  static async getByGoogleProfileId(googleProfileId: Account['googleProfileId']) {
+    const accountRecord = await prisma.user.findFirst({
+      where: {
+        googleProfileId,
+      },
+      include: {
+        password: true,
+        authenticators: true,
+      },
+    });
+    if (!accountRecord) throw new Error('User not found');
+    const { password, authenticators, ...user } = accountRecord;
+    const account: Account = {
+      ...user,
+      passwordHash: password?.hash ?? null,
+      authenticators: authenticators.map((authenticator) => ({
+        ...authenticator,
+        transports: authenticator.transports.split(','),
+      })),
+    };
+    return account;
   }
 
   protected static async _upsertOrDeletePassword(passwordHash: string | null, userId: User['id']) {

@@ -122,6 +122,7 @@ describe('AccountRepository', () => {
     await AccountFactory.create({
       name: 'test',
       id: 'testID',
+      googleProfileId: 'testGoogleProfileId',
     });
     const account = await AccountRepository.getById('testID');
     expect(account).toBeDefined();
@@ -130,9 +131,24 @@ describe('AccountRepository', () => {
     await AccountFactory.create({
       name: 'test',
       id: 'testID',
+      googleProfileId: 'testGoogleProfileId',
     });
     const account = await AccountRepository.getByName('test');
     expect(account).toBeDefined();
+  });
+  it('should get account by googleProfileId', async () => {
+    await AccountFactory.create({
+      name: 'test',
+      id: 'testID',
+      googleProfileId: 'testGoogleProfileId',
+    });
+    const account = await AccountRepository.getByGoogleProfileId('testGoogleProfileId');
+    expect(account).toBeDefined();
+  });
+  it('should throw error if account not found by googleProfileId', async () => {
+    await expect(AccountRepository.getByGoogleProfileId('testGoogleProfileId')).rejects.toThrow(
+      'User not found',
+    );
   });
   it('should throw error if account not found by id', async () => {
     await expect(AccountRepository.getById('testID')).rejects.toThrow();
