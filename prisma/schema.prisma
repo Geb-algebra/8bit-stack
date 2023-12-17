@@ -21,15 +21,10 @@ model User {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    password       Password?
     authenticators Authenticator[]
-}
 
-model Password {
-    hash String
-
-    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-    userId String @unique
+    @@index([googleProfileId], name: "user_google_profile_id")
+    @@index([name], name: "user_name")
 }
 
 model Authenticator {
@@ -46,4 +41,7 @@ model Authenticator {
     transports           String
     createdAt            DateTime @default(now())
     updatedAt            DateTime @updatedAt
+
+    @@index([credentialID], name: "authenticator_credential_id")
+    @@index(fields: [userId], name: "authenticator_user_id")
 }

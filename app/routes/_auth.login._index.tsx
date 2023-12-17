@@ -4,7 +4,7 @@ import {
   type MetaFunction,
   json,
 } from '@remix-run/node';
-import { Form, Link, useActionData, useLoaderData } from '@remix-run/react';
+import { Form, useActionData, useLoaderData } from '@remix-run/react';
 import { handleFormSubmit } from '~/services/webauthn.ts';
 
 import { authenticator } from '~/services/auth.server.ts';
@@ -13,6 +13,7 @@ import AuthButton from '~/components/AuthButton.tsx';
 import AuthErrorMessage from '~/components/AuthErrorMessage.tsx';
 import { generateAuthenticationOptions } from '@simplewebauthn/server';
 import { getSession, sessionStorage } from '~/services/session.server.ts';
+import GoogleAuthButton from '~/components/GoogleAuthButton.tsx';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await authenticator.isAuthenticated(request, { successRedirect: '/' });
@@ -59,14 +60,8 @@ export default function LoginPage() {
           </AuthButton>
         </Form>
         <Form method="post" action="/google">
-          <AuthButton type="submit" value="google">
-            Log In with Google
-          </AuthButton>
+          <GoogleAuthButton value="google">Log In with Google</GoogleAuthButton>
         </Form>
-        <p className="h-6 w-full text-center">or</p>
-        <Link to="/login/password">
-          <AuthButton>Log In with Password</AuthButton>
-        </Link>
       </AuthContainer>
     </div>
   );

@@ -1,4 +1,4 @@
-import { isUsernameAvailable, getHashedPassword, verifyPassword } from '~/services/auth.server.ts';
+import { isUsernameAvailable } from '~/services/auth.server.ts';
 import { AccountFactory, AccountRepository } from './account.server.ts';
 import { prisma } from '~/db.server.ts';
 
@@ -55,14 +55,6 @@ describe('AccountFactory', () => {
     });
   });
 
-  it('should hash password and create an account with the hash', async () => {
-    const account = await AccountFactory.create({
-      name: 'test',
-      id: 'testID',
-      passwordHash: await getHashedPassword('testPassword'),
-    });
-    expect(verifyPassword('testPassword', account.passwordHash ?? '')).resolves.toBe(true);
-  });
   it('should throw error if name is not avaliable', async () => {
     await AccountFactory.create({
       name: 'test',
@@ -82,17 +74,6 @@ describe('AccountFactory', () => {
       where: { name: 'test' },
     });
     expect(account).toBeDefined();
-  });
-  it('should save password to database', async () => {
-    await AccountFactory.create({
-      name: 'test',
-      id: 'testID',
-      passwordHash: await getHashedPassword('testPassword'),
-    });
-    const password = await prisma.password.findUnique({
-      where: { userId: 'testID' },
-    });
-    expect(password).toBeDefined();
   });
   it('should save authenticators to database', async () => {
     await AccountFactory.create({
@@ -166,18 +147,6 @@ describe('AccountRepository', () => {
     await AccountRepository.save(account);
     const updatedAccount = await AccountRepository.getById('testID');
     expect(updatedAccount.name).toBe('test2');
-  });
-  it('should update password', async () => {
-    await AccountFactory.create({
-      name: 'test',
-      id: 'testID',
-      passwordHash: await getHashedPassword('testPassword'),
-    });
-    const account = await AccountRepository.getById('testID');
-    account.passwordHash = await getHashedPassword('testPassword2');
-    await AccountRepository.save(account);
-    const updatedAccount = await AccountRepository.getById('testID');
-    expect(verifyPassword('testPassword2', updatedAccount.passwordHash ?? '')).resolves.toBe(true);
   });
   it('should add authenticators', async () => {
     await AccountFactory.create({
