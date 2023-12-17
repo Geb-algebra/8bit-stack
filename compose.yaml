@@ -19,6 +19,7 @@ services:
       - APP_URL
     ports:
       - 3000:3000
+      - 3001:3001
       - 5555:5555
       - 8080:8080 # remix DevTools websocket server
     volumes:
@@ -38,6 +39,7 @@ services:
       - node_modules:/8bit-stack/node_modules
     ports:
       - 3000:3000
+      - 3001:3001
       - 5555:5555
       - 8080:8080 # remix DevTools websocket server
       - 9323:9323 # playwright reporter
