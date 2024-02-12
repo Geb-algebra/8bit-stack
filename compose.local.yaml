@@ -32,7 +32,7 @@ services:
     depends_on:
       - mysql
   validate:
-    image: mcr.microsoft.com/playwright:v1.40.1-jammy
+    image: mcr.microsoft.com/playwright:v1.41.2-jammy
     platform: linux/amd64
     environment:
       - HOST=0.0.0.0
