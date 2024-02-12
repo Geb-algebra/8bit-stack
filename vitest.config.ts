@@ -12,6 +12,10 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: ['./test/unit/setup-test-env.ts'],
-    singleThread: true, // set this to avoid multiple tests trying to interact DB at the same time.
+    poolOptions: {
+      threads: {
+        singleThread: true, // set this to avoid multiple tests trying to interact DB at the same time.
+      },
+    },
   },
 });
