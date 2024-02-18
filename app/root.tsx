@@ -1,8 +1,8 @@
 import { cssBundleHref } from '@remix-run/css-bundle';
 import type { LinksFunction } from '@remix-run/node';
-import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration } from '@remix-run/react';
-import stylesheet from '~/styles/tailwind.css';
-import rdtStylesheet from 'remix-development-tools/index.css';
+import { Links, Meta, Outlet, Scripts, ScrollRestoration } from '@remix-run/react';
+import stylesheet from '~/styles/tailwind.css?url';
+import rdtStylesheet from 'remix-development-tools/index.css?url';
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ rel: 'stylesheet', href: cssBundleHref }] : []),
@@ -24,7 +24,6 @@ function App() {
         <Outlet />
         <ScrollRestoration />
         <Scripts />
-        <LiveReload />
       </body>
     </html>
   );

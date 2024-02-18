@@ -11,7 +11,16 @@ import { type ServerBuild, broadcastDevReady, installGlobals } from '@remix-run/
 
 installGlobals();
 
-const BUILD_PATH = '../build/index.js';
+const viteDevServer =
+  process.env.NODE_ENV === 'production'
+    ? undefined
+    : await import('vite').then((vite) =>
+        vite.createServer({
+          server: { middlewareMode: true },
+        }),
+      );
+
+const BUILD_PATH = '../build/server/index.js';
 const build = (await import(BUILD_PATH)) as unknown as ServerBuild;
 
 let devBuild = build as unknown as _ServerBuild;
@@ -37,11 +46,19 @@ app.use(compression()); // compress static files
 // http://expressjs.com/en/advanced/best-practice-security.html#at-a-minimum-disable-x-powered-by-header
 app.disable('x-powered-by');
 
-// Remix fingerprints its assets so we can cache forever.
-app.use('/build', express.static('public/build', { immutable: true, maxAge: '1y' }));
-
-// Aggressively cache fonts for a year
-app.use('/fonts', express.static('public/fonts', { immutable: true, maxAge: '1y' }));
+// handle asset requests
+if (viteDevServer) {
+  app.use(viteDevServer.middlewares);
+} else {
+  app.use(
+    '/assets',
+    express.static('build/client/assets', {
+      immutable: true,
+      maxAge: '1y',
+    }),
+  );
+}
+app.use(express.static('build/client', { maxAge: '1h' }));
 
 app.use(morgan('tiny')); // logging
 
@@ -50,7 +67,7 @@ const httpServer = createServer(app);
 app.all(
   '*',
   createRequestHandler({
-    build: process.env.NODE_ENV === 'development' ? (devBuild as unknown as ServerBuild) : build,
+    build: viteDevServer ? () => viteDevServer.ssrLoadModule('virtual:remix/server-build') : build,
     mode: process.env.NODE_ENV,
   }),
 );
