@@ -5,9 +5,7 @@ import express from 'express';
 import morgan from 'morgan';
 import closeWithGrace from 'close-with-grace';
 import { createRequestHandler } from '@remix-run/express';
-
-import type { ServerBuild as _ServerBuild } from '@remix-run/server-runtime';
-import { type ServerBuild, installGlobals } from '@remix-run/node';
+import { installGlobals } from '@remix-run/node';
 
 installGlobals();
 
@@ -20,23 +18,11 @@ const viteDevServer =
         }),
       );
 
-const BUILD_PATH = '../build/server/index.js';
-const build = (await import(BUILD_PATH)) as unknown as ServerBuild;
-
-let devBuild = build as unknown as _ServerBuild;
-let devToolsConfig = null;
 // Make sure you guard this with NODE_ENV check
 if (process.env.NODE_ENV === 'development') {
   if (process.env.MOCKS === 'true') {
     await import('../mocks/index.ts');
   }
-  const { withServerDevTools, defineServerConfig } = await import('remix-development-tools/server');
-  // Allows you to define the configuration for the dev tools
-  devToolsConfig = defineServerConfig({
-    //... your config here ...
-  });
-  // wrap the build with the dev tools
-  devBuild = withServerDevTools(build as unknown as _ServerBuild, devToolsConfig);
 }
 
 const app = express();
@@ -67,7 +53,10 @@ const httpServer = createServer(app);
 app.all(
   '*',
   createRequestHandler({
-    build: viteDevServer ? () => viteDevServer.ssrLoadModule('virtual:remix/server-build') : build,
+    // @ts-ignore
+    build: viteDevServer
+      ? () => viteDevServer.ssrLoadModule('virtual:remix/server-build')
+      : await import('../build/server/index.js'),
     mode: process.env.NODE_ENV,
   }),
 );
