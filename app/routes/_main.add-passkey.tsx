@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
 import { useLoaderData, useActionData, Form } from '@remix-run/react';
-import { generateRegistrationOptions } from '@simplewebauthn/server';
+import { generateRegistrationOptions } from '~/utils/simplewebauthn.server.ts';
 import type { RegistrationResponseJSON } from '@simplewebauthn/typescript-types';
 import AuthButton from '~/components/AuthButton.tsx';
 import AuthContainer from '~/components/AuthContainer.tsx';
@@ -15,7 +15,7 @@ import {
   verifyNewAuthenticator,
 } from '~/services/auth.server.ts';
 import { handleFormSubmit } from '~/services/webauthn.ts';
-import { getRequiredStringFromFormData } from '~/utils.ts';
+import { getRequiredStringFromFormData } from '~/utils/utils';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: '/welcome' });

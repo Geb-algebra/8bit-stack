@@ -1,4 +1,4 @@
-import { verifyRegistrationResponse } from '@simplewebauthn/server';
+import { verifyRegistrationResponse } from '~/utils/simplewebauthn.server.ts';
 import type { RegistrationResponseJSON } from '@simplewebauthn/typescript-types';
 import { Authenticator } from 'remix-auth';
 import invariant from 'tiny-invariant';
