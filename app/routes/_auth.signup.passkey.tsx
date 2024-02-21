@@ -13,11 +13,11 @@ import { WEBAUTHN_RP_ID, WEBAUTHN_RP_NAME, authenticator } from '~/services/auth
 import AuthContainer from '~/components/AuthContainer.tsx';
 import AuthButton from '~/components/AuthButton.tsx';
 import AuthErrorMessage from '~/components/AuthErrorMessage.tsx';
-import { generateRegistrationOptions } from '@simplewebauthn/server';
+import { generateRegistrationOptions } from '~/utils/simplewebauthn.server.ts';
 import { handleFormSubmit } from '~/services/webauthn.ts';
 import { getSession, sessionStorage } from '~/services/session.server.ts';
 import { createId } from '@paralleldrive/cuid2';
-import { getRequiredStringFromFormData } from '~/utils.ts';
+import { getRequiredStringFromFormData } from '~/utils/utils';
 import PasskeyHero from '~/components/PasskeyHero.tsx';
 
 export async function loader({ request }: LoaderFunctionArgs) {

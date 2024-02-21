@@ -77,7 +77,6 @@ const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, () => {
   console.info(`Running app in ${process.env.NODE_ENV} mode`);
   console.info(`Express server running at: http://localhost:${PORT}`);
-  if (process.env.NODE_ENV === 'development') broadcastDevReady(build);
 });
 
 // If you want to run the remix dev command with --no-restart, see https://github.com/remix-run/remix/blob/templates_v2_dev/templates/express
