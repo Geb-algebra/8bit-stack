@@ -7,7 +7,7 @@ import closeWithGrace from 'close-with-grace';
 import { createRequestHandler } from '@remix-run/express';
 
 import type { ServerBuild as _ServerBuild } from '@remix-run/server-runtime';
-import { type ServerBuild, broadcastDevReady, installGlobals } from '@remix-run/node';
+import { type ServerBuild, installGlobals } from '@remix-run/node';
 
 installGlobals();
 
