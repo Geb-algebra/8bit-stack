@@ -5,20 +5,16 @@ import invariant from 'tiny-invariant';
 import { type User, AccountFactory, AccountRepository } from '~/models/account.server.ts';
 import { UserRepository } from '~/models/user.server.ts';
 
-import { WebAuthnStrategy } from '~/services/webauthn-strategy.server.ts';
 import { getSession, sessionStorage } from '~/services/session.server.ts';
 import { getAuthenticatorById } from '~/models/authenticator.server.ts';
 import { GoogleStrategy } from 'remix-auth-google';
+import { WebAuthnStrategy } from 'remix-auth-webauthn';
 
 export let authenticator = new Authenticator<User>(sessionStorage);
 
 export async function isUsernameAvailable(username: string) {
-  try {
-    await UserRepository.getByName(username);
-    return false;
-  } catch (error) {
-    return true;
-  }
+  const user = await UserRepository.getByName(username);
+  return !user;
 }
 
 // we reuse them to add new passkeys to authenticated users
@@ -27,64 +23,70 @@ export const WEBAUTHN_RP_NAME = '8bit Stack';
 export const WEBAUTHN_RP_ID = process.env.APP_URL!.split('://')[1].split(':')[0];
 export const WEBAUTHN_ORIGIN = process.env.APP_URL!;
 
-authenticator.use(
-  new WebAuthnStrategy(
-    {
-      // The human-readable name of your app
-      // Type: string | (response:Response) => Promise<string> | string
-      rpName: WEBAUTHN_RP_NAME,
-      // The hostname of the website, determines where passkeys can be used
-      // See https://www.w3.org/TR/webauthn-2/#relying-party-identifier
-      // Type: string | (response:Response) => Promise<string> | string
-      rpID: WEBAUTHN_RP_ID,
-      // Website URL (or array of URLs) where the registration can occur
-      origin: WEBAUTHN_ORIGIN,
-      // Return the list of authenticators associated with this user. You might
-      // need to transform a CSV string into a list of strings at this step.
-      getUserAuthenticators: async (user) => {
-        if (!user) return [];
+export const webAuthnStrategy = new WebAuthnStrategy<User>(
+  {
+    // The human-readable name of your app
+    // Type: string | (response:Response) => Promise<string> | string
+    rpName: WEBAUTHN_RP_NAME,
+    // The hostname of the website, determines where passkeys can be used
+    // See https://www.w3.org/TR/webauthn-2/#relying-party-identifier
+    // Type: string | (response:Response) => Promise<string> | string
+    rpID: WEBAUTHN_RP_ID,
+    // Website URL (or array of URLs) where the registration can occur
+    origin: WEBAUTHN_ORIGIN,
+    // Return the list of authenticators associated with this user. You might
+    // need to transform a CSV string into a list of strings at this step.
+    getUserAuthenticators: async (user) => {
+      if (!user) return [];
+      try {
         const account = await AccountRepository.getById(user.id);
-        return account.authenticators.map((authenticator) => {
-          return {
-            ...authenticator,
-            transports: authenticator.transports,
-          };
-        });
-      },
-      // Transform the user object into the shape expected by the strategy.
-      // You can use a regular username, the users email address, or something else.
-      getUserDetails: (user) => ({ id: user!.id, username: user!.name }),
-      getUserByUsername: (username) => UserRepository.getByName(username),
-      getAuthenticatorById: (id) => getAuthenticatorById(id),
-    },
-    async ({ authenticator, type, username, userId }) => {
-      const savedAuthenticator = await getAuthenticatorById(authenticator.credentialID);
-      if (type === 'registration') {
-        // Check if the authenticator exists in the database
-        if (savedAuthenticator) {
-          throw new Error('Authenticator has already been registered.');
+        return account.authenticators;
+      } catch (error) {
+        if (error instanceof Error && error.message === 'User not found') {
+          return [];
+        } else {
+          throw error;
         }
-        invariant(userId, 'User id is required.');
-        invariant(username, 'Username is required.');
-        const { authenticators, ...user } = await AccountFactory.create({
-          name: username,
-          id: userId,
-          authenticators: [{ ...authenticator, name: null }],
-        });
-        return user;
-      } else if (type === 'authentication') {
-        if (!savedAuthenticator) throw new Error('Authenticator not found');
-        const { authenticators, ...user } = await AccountRepository.getById(
-          savedAuthenticator.userId,
-        );
-        return user;
-      } else {
-        throw new Error('Invalid verification type');
       }
     },
-  ),
-  'webauthn',
+    // Transform the user object into the shape expected by the strategy.
+    // You can use a regular username, the users email address, or something else.
+    getUserDetails: (user) => ({ id: user!.id, username: user!.name }),
+    getUserByUsername: (username) => UserRepository.getByName(username),
+    getAuthenticatorById: async (id) => {
+      const authenticator = await getAuthenticatorById(id);
+      invariant(authenticator, 'Authenticator not found');
+      return { ...authenticator, transports: authenticator.transports.join(',') };
+    },
+  },
+  async ({ authenticator, type, username }) => {
+    const savedAuthenticator = await getAuthenticatorById(authenticator.credentialID);
+    if (type === 'registration') {
+      // Check if the authenticator exists in the database
+      if (savedAuthenticator) {
+        throw new Error('Authenticator has already been registered.');
+      }
+      invariant(username, 'Username is required.');
+      const { authenticators, ...user } = await AccountFactory.create({
+        name: username,
+        authenticators: [
+          { ...authenticator, transports: authenticator.transports.split(','), name: null },
+        ],
+      });
+      return user;
+    } else if (type === 'authentication') {
+      if (!savedAuthenticator) throw new Error('Authenticator not found');
+      const { authenticators, ...user } = await AccountRepository.getById(
+        savedAuthenticator.userId,
+      );
+      return user;
+    } else {
+      throw new Error('Invalid verification type');
+    }
+  },
 );
+
+authenticator.use(webAuthnStrategy, 'webauthn');
 
 let googleStrategy = new GoogleStrategy(
   {
