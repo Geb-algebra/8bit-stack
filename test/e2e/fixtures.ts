@@ -1,6 +1,6 @@
 import { test as base } from '@playwright/test';
 import { username, googleProfileId } from './consts.ts';
-import { AccountFactory } from '~/models/account.server.ts';
+import { AccountFactory } from '~/accounts/lifecycle/account.server.ts';
 import { getSession, sessionStorage } from '~/services/session.server.ts';
 import { authenticator } from '~/services/auth.server.ts';
 import { parse } from 'cookie';

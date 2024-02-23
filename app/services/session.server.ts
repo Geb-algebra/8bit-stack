@@ -1,6 +1,7 @@
 import { createCookieSessionStorage } from '@remix-run/node';
+import { ValueError } from '~/errors';
 
-if (!process.env.SESSION_SECRET) throw new Error('SESSION_SECRET must be set');
+if (!process.env.SESSION_SECRET) throw new ValueError('SESSION_SECRET must be set');
 
 export const sessionStorage = createCookieSessionStorage({
   cookie: {

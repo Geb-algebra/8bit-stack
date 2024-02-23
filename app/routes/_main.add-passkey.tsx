@@ -6,11 +6,12 @@ import AuthButton from '~/components/AuthButton.tsx';
 import AuthContainer from '~/components/AuthContainer.tsx';
 import AuthErrorMessage from '~/components/AuthErrorMessage.tsx';
 import PasskeyHero from '~/components/PasskeyHero.tsx';
-import { AccountRepository } from '~/models/account.server.ts';
+import { AccountRepository } from '~/accounts/lifecycle/account.server.ts';
 import { authenticator, verifyNewAuthenticator, webAuthnStrategy } from '~/services/auth.server.ts';
 import { handleFormSubmit } from 'remix-auth-webauthn/browser';
-import { getRequiredStringFromFormData } from '~/utils/utils';
-import { getSession, sessionStorage } from '~/services/session.server';
+import { getRequiredStringFromFormData } from '~/utils.ts';
+import { getSession, sessionStorage } from '~/services/session.server.ts';
+import { ValueError } from '~/errors';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: '/welcome' });
@@ -22,7 +23,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const session = await getSession(request);
   const expectedChallenge = session.get('challenge');
   if (!expectedChallenge) {
-    throw new Error('Expected challenge not found.');
+    throw new ValueError('Expected challenge not found.');
   }
   try {
     const formData = await request.formData();
@@ -31,11 +32,16 @@ export async function action({ request }: ActionFunctionArgs) {
       const responseData = getRequiredStringFromFormData(formData, 'response');
       data = JSON.parse(responseData);
     } catch {
-      throw new Error('Invalid passkey response JSON.');
+      throw new ValueError('Invalid passkey response JSON.');
     }
     const account = await AccountRepository.getById(user.id);
     const newAuthenticator = await verifyNewAuthenticator(data, expectedChallenge);
-    account.authenticators.push({ ...newAuthenticator, name: null });
+    account.authenticators.push({
+      ...newAuthenticator,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: null,
+    });
     await AccountRepository.save(account);
     throw redirect('/settings');
   } catch (error) {

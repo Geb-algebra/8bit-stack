@@ -1,15 +1,23 @@
 import { createId } from '@paralleldrive/cuid2';
-import { type User } from '@prisma/client';
 
 import { prisma } from '~/db.server.ts';
-import type { Authenticator } from '~/models/authenticator.server.ts';
 import { isUsernameAvailable } from '~/services/auth.server.ts';
+import type { User, Account, Authenticator } from '../models/account.ts';
+import { IntegrityError, ObjectNotFoundError } from '~/errors.ts';
 
-export type { User } from '@prisma/client';
+export class UserRepository {
+  static async getById(id: User['id']) {
+    return await prisma.user.findUnique({ where: { id } });
+  }
 
-export type Account = User & {
-  authenticators: Authenticator[];
-};
+  static async getByName(name: User['name']) {
+    return await prisma.user.findUnique({ where: { name } });
+  }
+
+  static async save(user: User) {
+    return await prisma.user.update({ where: { id: user.id }, data: user });
+  }
+}
 
 export class AccountFactory {
   static async generateId() {
@@ -21,7 +29,7 @@ export class AccountFactory {
    * @param name
    * @param id optional, if not provided, will generate a random id
    * @returns the created user
-   * @throws Error if username already taken
+   * @throws ObjectNotFoundError if username already taken
    */
   static async create({
     name,
@@ -35,7 +43,7 @@ export class AccountFactory {
     authenticators?: Authenticator[];
   }): Promise<Account> {
     if (!(await isUsernameAvailable(name))) {
-      throw new Error('username already taken');
+      throw new IntegrityError('username already taken');
     }
     const user = await prisma.user.create({
       data: {
@@ -65,7 +73,7 @@ export class AccountRepository {
         authenticators: true,
       },
     });
-    if (!accountRecord) throw new Error('User not found');
+    if (!accountRecord) throw new ObjectNotFoundError('User not found');
     const { authenticators, ...user } = accountRecord;
     const account: Account = {
       ...user,
@@ -94,7 +102,7 @@ export class AccountRepository {
         authenticators: true,
       },
     });
-    if (!accountRecord) throw new Error('User not found');
+    if (!accountRecord) throw new ObjectNotFoundError('User not found');
     const { authenticators, ...user } = accountRecord;
     const account: Account = {
       ...user,
