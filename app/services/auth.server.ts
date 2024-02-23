@@ -2,13 +2,18 @@ import { verifyRegistrationResponse } from '~/utils/simplewebauthn.server.ts';
 import type { RegistrationResponseJSON } from '@simplewebauthn/typescript-types';
 import { Authenticator } from 'remix-auth';
 import invariant from 'tiny-invariant';
-import { type User, AccountFactory, AccountRepository } from '~/models/account.server.ts';
-import { UserRepository } from '~/models/user.server.ts';
+import type { User } from '../accounts/models/account.ts';
+import {
+  UserRepository,
+  AccountFactory,
+  AccountRepository,
+} from '~/accounts/lifecycle/account.server.ts';
 
 import { getSession, sessionStorage } from '~/services/session.server.ts';
-import { getAuthenticatorById } from '~/models/authenticator.server.ts';
+import { getAuthenticatorById } from '~/accounts/lifecycle/authenticator.server.ts';
 import { GoogleStrategy } from 'remix-auth-google';
 import { WebAuthnStrategy } from 'remix-auth-webauthn';
+import { IntegrityError, ObjectNotFoundError, ValueError } from '~/errors.ts';
 
 export let authenticator = new Authenticator<User>(sessionStorage);
 
@@ -42,7 +47,7 @@ export const webAuthnStrategy = new WebAuthnStrategy<User>(
         const account = await AccountRepository.getById(user.id);
         return account.authenticators;
       } catch (error) {
-        if (error instanceof Error && error.message === 'User not found') {
+        if (error instanceof ObjectNotFoundError) {
           return [];
         } else {
           throw error;
@@ -64,7 +69,7 @@ export const webAuthnStrategy = new WebAuthnStrategy<User>(
     if (type === 'registration') {
       // Check if the authenticator exists in the database
       if (savedAuthenticator) {
-        throw new Error('Authenticator has already been registered.');
+        throw new IntegrityError('Authenticator has already been registered.');
       }
       invariant(username, 'Username is required.');
       const { authenticators, ...user } = await AccountFactory.create({
@@ -75,13 +80,13 @@ export const webAuthnStrategy = new WebAuthnStrategy<User>(
       });
       return user;
     } else if (type === 'authentication') {
-      if (!savedAuthenticator) throw new Error('Authenticator not found');
+      if (!savedAuthenticator) throw new ObjectNotFoundError('Authenticator not found');
       const { authenticators, ...user } = await AccountRepository.getById(
         savedAuthenticator.userId,
       );
       return user;
     } else {
-      throw new Error('Invalid verification type');
+      throw new ValueError('Invalid verification type');
     }
   },
 );
@@ -145,10 +150,10 @@ export async function verifyNewAuthenticator(
     };
     const savedAuthenticator = await getAuthenticatorById(newAuthenticator.credentialID);
     if (savedAuthenticator) {
-      throw new Error('Authenticator has already been registered.');
+      throw new IntegrityError('Authenticator has already been registered.');
     }
     return newAuthenticator;
   } else {
-    throw new Error('Passkey verification failed.');
+    throw new ValueError('Passkey verification failed.');
   }
 }
