@@ -43,16 +43,9 @@ export const webAuthnStrategy = new WebAuthnStrategy<User>(
     // need to transform a CSV string into a list of strings at this step.
     getUserAuthenticators: async (user) => {
       if (!user) return [];
-      try {
-        const account = await AccountRepository.getById(user.id);
-        return account.authenticators;
-      } catch (error) {
-        if (error instanceof ObjectNotFoundError) {
-          return [];
-        } else {
-          throw error;
-        }
-      }
+      const account = await AccountRepository.getById(user.id);
+      if (!account) return [];
+      return account.authenticators;
     },
     // Transform the user object into the shape expected by the strategy.
     // You can use a regular username, the users email address, or something else.
@@ -78,12 +71,13 @@ export const webAuthnStrategy = new WebAuthnStrategy<User>(
           { ...authenticator, transports: authenticator.transports.split(','), name: null },
         ],
       });
+      await AccountRepository.save({ authenticators, ...user });
       return user;
     } else if (type === 'authentication') {
       if (!savedAuthenticator) throw new ObjectNotFoundError('Authenticator not found');
-      const { authenticators, ...user } = await AccountRepository.getById(
-        savedAuthenticator.userId,
-      );
+      const account = await AccountRepository.getById(savedAuthenticator.userId);
+      if (!account) throw new ObjectNotFoundError('Account not found');
+      const { authenticators, ...user } = account;
       return user;
     } else {
       throw new ValueError('Invalid verification type');
@@ -101,17 +95,19 @@ let googleStrategy = new GoogleStrategy(
   },
   async ({ accessToken, refreshToken, extraParams, profile }) => {
     // Get the user data from your DB or API using the tokens and profile
-    let account;
-    try {
-      account = await AccountRepository.getByGoogleProfileId(profile.id);
-    } catch (error) {
-      account = await AccountFactory.create({
+    const account = await AccountRepository.getByGoogleProfileId(profile.id);
+    if (account) {
+      const { authenticators, ...user } = account;
+      return user;
+    } else {
+      const newAccount = await AccountFactory.create({
         name: profile.displayName,
         googleProfileId: profile.id,
       });
+      await AccountRepository.save(newAccount);
+      const { authenticators, ...user } = newAccount;
+      return user;
     }
-    const { authenticators, ...user } = account;
-    return user;
   },
 );
 

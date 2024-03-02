@@ -11,7 +11,7 @@ import { authenticator, verifyNewAuthenticator, webAuthnStrategy } from '~/servi
 import { handleFormSubmit } from 'remix-auth-webauthn/browser';
 import { getRequiredStringFromFormData } from '~/utils.ts';
 import { getSession, sessionStorage } from '~/services/session.server.ts';
-import { ValueError } from '~/errors';
+import { ObjectNotFoundError, ValueError } from '~/errors';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: '/welcome' });
@@ -35,6 +35,7 @@ export async function action({ request }: ActionFunctionArgs) {
       throw new ValueError('Invalid passkey response JSON.');
     }
     const account = await AccountRepository.getById(user.id);
+    if (!account) throw new ObjectNotFoundError('Account not found.');
     const newAuthenticator = await verifyNewAuthenticator(data, expectedChallenge);
     account.authenticators.push({
       ...newAuthenticator,
