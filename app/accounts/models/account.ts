@@ -1,10 +1,16 @@
-import type { Authenticator as TransportsJoinedAuthenticator, User } from '@prisma/client';
+export type User = {
+  id: string;
+  name: string;
+  googleProfileId: string | null;
+};
 
-export type { User };
-export type Authenticator = Omit<
-  TransportsJoinedAuthenticator,
-  'transports' | 'createdAt' | 'updatedAt' | 'userId'
-> & {
+export type Authenticator = {
+  credentialID: string;
+  name: string | null;
+  credentialPublicKey: string;
+  counter: number;
+  credentialDeviceType: string;
+  credentialBackedUp: number;
   transports: string[];
   createdAt?: Date;
   updatedAt?: Date;

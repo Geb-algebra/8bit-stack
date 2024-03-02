@@ -1,17 +1,22 @@
 import { createId } from '@paralleldrive/cuid2';
 
 import { prisma } from '~/db.server.ts';
+import type { Account, Authenticator, User } from '../models/account.ts';
 import { isUsernameAvailable } from '~/services/auth.server.ts';
-import type { User, Account, Authenticator } from '../models/account.ts';
-import { IntegrityError, ObjectNotFoundError } from '~/errors.ts';
 
 export class UserRepository {
   static async getById(id: User['id']) {
-    return await prisma.user.findUnique({ where: { id } });
+    const _user = await prisma.user.findUnique({ where: { id } });
+    if (!_user) return null;
+    const { createdAt, updatedAt, ...user } = _user;
+    return user;
   }
 
   static async getByName(name: User['name']) {
-    return await prisma.user.findUnique({ where: { name } });
+    const _user = await prisma.user.findUnique({ where: { name } });
+    if (!_user) return null;
+    const { createdAt, updatedAt, ...user } = _user;
+    return user;
   }
 
   static async save(user: User) {
@@ -29,12 +34,12 @@ export class AccountFactory {
    * @param name
    * @param id optional, if not provided, will generate a random id
    * @returns the created user
-   * @throws ObjectNotFoundError if username already taken
+   * @throws Error if username already taken
    */
   static async create({
     name,
     id,
-    googleProfileId,
+    googleProfileId = null,
     authenticators = [],
   }: {
     name: User['name'];
@@ -43,37 +48,28 @@ export class AccountFactory {
     authenticators?: Authenticator[];
   }): Promise<Account> {
     if (!(await isUsernameAvailable(name))) {
-      throw new IntegrityError('username already taken');
+      throw new Error('username already taken');
     }
-    const user = await prisma.user.create({
-      data: {
-        id: id ?? (await this.generateId()),
-        name,
-        googleProfileId,
-      },
-    });
-    for (const authenticator of authenticators) {
-      await prisma.authenticator.create({
-        data: {
-          ...authenticator,
-          transports: authenticator.transports.join(','),
-          userId: user.id,
-        },
-      });
-    }
-    return await AccountRepository.getById(user.id);
+    return {
+      id: id ?? (await this.generateId()),
+      name,
+      googleProfileId,
+      authenticators,
+    };
   }
 }
 
 export class AccountRepository {
-  private static async _get(where: { id: User['id'] } | { name: User['name'] }): Promise<Account> {
+  private static async _get(
+    where: { id: User['id'] } | { name: User['name'] },
+  ): Promise<Account | null> {
     const accountRecord = await prisma.user.findUnique({
       where,
       include: {
         authenticators: true,
       },
     });
-    if (!accountRecord) throw new ObjectNotFoundError('User not found');
+    if (!accountRecord) return null;
     const { authenticators, ...user } = accountRecord;
     const account: Account = {
       ...user,
@@ -85,7 +81,7 @@ export class AccountRepository {
     return account;
   }
 
-  static async getById(id: Account['id']): Promise<Account> {
+  static async getById(id: Account['id']) {
     return await this._get({ id });
   }
 
@@ -102,7 +98,7 @@ export class AccountRepository {
         authenticators: true,
       },
     });
-    if (!accountRecord) throw new ObjectNotFoundError('User not found');
+    if (!accountRecord) return null;
     const { authenticators, ...user } = accountRecord;
     const account: Account = {
       ...user,
@@ -114,69 +110,39 @@ export class AccountRepository {
     return account;
   }
 
-  protected static async _upsertOrDeleteAuthenticators(
-    authenticators: Authenticator[],
-    userId: User['id'],
-  ) {
-    const newAuthenticators = authenticators.map((authenticator) => ({
-      ...authenticator,
-      transports: authenticator.transports.join(','),
-    }));
-    const existingAuthenticators = await prisma.authenticator.findMany({
-      where: { userId },
-    });
-    const deletingAuthenticators = existingAuthenticators.filter(
-      (authenticator) =>
-        !newAuthenticators.find(
-          (newAuthenticator) => newAuthenticator.credentialID === authenticator.credentialID,
-        ),
-    );
-    await prisma.authenticator.deleteMany({
-      where: {
-        credentialID: {
-          in: deletingAuthenticators.map((authenticator) => authenticator.credentialID),
-        },
-      },
-    });
-    const creatingAuthenticators = newAuthenticators.filter(
-      (authenticator) =>
-        !existingAuthenticators.find(
-          (existingAuthenticator) =>
-            existingAuthenticator.credentialID === authenticator.credentialID,
-        ),
-    );
-    for (const authenticator of creatingAuthenticators) {
-      await prisma.authenticator.create({
-        data: {
-          ...authenticator,
-          user: {
-            connect: {
-              id: userId,
-            },
-          },
-        },
-      });
-    }
-    const updatingAuthenticators = newAuthenticators.filter((authenticator) =>
-      existingAuthenticators.find(
-        (existingAuthenticator) =>
-          existingAuthenticator.credentialID === authenticator.credentialID,
-      ),
-    );
-    for (const authenticator of updatingAuthenticators) {
-      await prisma.authenticator.update({
-        where: { credentialID: authenticator.credentialID },
-        data: authenticator,
-      });
-    }
-  }
-
   static async save(account: Account) {
     const { authenticators, ...user } = account;
-    await this._upsertOrDeleteAuthenticators(authenticators, account.id);
-    return await prisma.user.update({
-      where: { id: account.id },
-      data: user,
+    await prisma.$transaction(async (prisma) => {
+      await prisma.user.upsert({
+        where: { id: account.id },
+        update: user,
+        create: user,
+      });
+      const newAuthenticators = authenticators.map((a) => ({
+        ...a,
+        transports: a.transports.join(','),
+      }));
+      const existingAuthenticators = await prisma.authenticator.findMany({
+        where: { userId: account.id },
+      });
+      const deletingAuthenticators = existingAuthenticators.filter(
+        (a) => !newAuthenticators.find((na) => na.credentialID === a.credentialID),
+      );
+      await prisma.authenticator.deleteMany({
+        where: { credentialID: { in: deletingAuthenticators.map((a) => a.credentialID) } },
+      });
+      const creatingAuthenticators = newAuthenticators.filter(
+        (a) => !existingAuthenticators.find((ea) => ea.credentialID === a.credentialID),
+      );
+      for (const a of creatingAuthenticators) {
+        await prisma.authenticator.create({ data: { ...a, userId: account.id } });
+      }
+      const updatingAuthenticators = newAuthenticators.filter((a) =>
+        existingAuthenticators.find((ea) => ea.credentialID === a.credentialID),
+      );
+      for (const a of updatingAuthenticators) {
+        await prisma.authenticator.update({ where: { credentialID: a.credentialID }, data: a });
+      }
     });
   }
 }

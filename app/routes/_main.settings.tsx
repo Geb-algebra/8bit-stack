@@ -12,10 +12,12 @@ import AuthButton from '~/components/AuthButton.tsx';
 import PasskeyHero from '~/components/PasskeyHero.tsx';
 
 import type { action as passkeyAction } from '~/routes/_main.settings.passkey.tsx';
+import { ObjectNotFoundError } from '~/errors';
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: '/welcome' });
   const account = await AccountRepository.getById(user.id);
+  if (!account) throw new ObjectNotFoundError('Account not found');
   return json({
     user,
     authenticators: account.authenticators,
