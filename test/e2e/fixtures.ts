@@ -16,6 +16,7 @@ export const test = base.extend({
       googleProfileId: 'testGoogleProfileId',
     });
     await use(page);
+    await resetDB();
   },
   loggedInPage: async ({ page, baseURL }, use) => {
     // referred to https://github.com/kentcdodds/kentcdodds.com/blob/main/e2e/utils.ts
@@ -40,12 +41,15 @@ export const test = base.extend({
         value: __session,
       },
     ]);
-    return use(page);
-    // I wanna logout here
+    await use(page);
+    await resetDB();
   },
 });
 
 test.beforeEach(async () => {
+  await resetDB();
+});
+test.afterAll(async () => {
   await resetDB();
 });
 
