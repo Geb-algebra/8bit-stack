@@ -7,13 +7,15 @@ FROM node:${NODE_VERSION}-slim as base
 WORKDIR /app
 ENV NODE_ENV=production
 
+# install opennssl for prisma
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Throw-away build stage to reduce size of final image
 FROM base as build
 
 # Install node modules
 COPY package-lock.json package.json ./
-RUN npm ci --include=dev
+RUN npm install --include=dev
 
 # Generate Prisma Client
 COPY prisma .
@@ -29,12 +31,9 @@ RUN npm prune --omit=dev
 # Final stage for app image
 FROM base
 
-# Install ca-certificates to support TLS, which is needed to connect to planetscale
-RUN apt-get update && apt-get install ca-certificates -y && rm -rf /var/lib/apt/lists/*
-
 # Copy built application
 COPY --from=build /app /app
 
 # Start the server by default, this can be overwritten at runtime
 EXPOSE ${PORT}
-ENTRYPOINT [ "npm", "run", "start" ]
+ENTRYPOINT [ "node", "./server-build/index.js" ]
