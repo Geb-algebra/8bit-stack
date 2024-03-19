@@ -7,6 +7,11 @@ services:
       - DATABASE_URL
       - SESSION_SECRET
       - APP_URL
+      - PORT
+      - GOOGLE_AUTH_CLIENT_ID
+      - GOOGLE_AUTH_CLIENT_SECRET
+      - TURSO_AUTH_TOKEN
+      - TURSO_DATABASE_URL
     ports:
       - 3000:3000
       - 5555:5555
