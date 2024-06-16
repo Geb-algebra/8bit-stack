@@ -1,8 +1,8 @@
-import { vitePlugin as remix } from '@remix-run/dev';
-import { defineConfig } from 'vite';
-import { remixDevTools } from 'remix-development-tools/vite';
-import { installGlobals } from '@remix-run/node';
-import tsconfigPaths from 'vite-tsconfig-paths';
+import { vitePlugin as remix } from "@remix-run/dev";
+import { installGlobals } from "@remix-run/node";
+import { remixDevTools } from "remix-development-tools/vite";
+import { defineConfig } from "vite";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 installGlobals();
 
@@ -13,11 +13,11 @@ export default defineConfig({
   plugins: [
     remixDevTools(),
     remix({
-      ignoredRouteFiles: ['**/.*'],
+      ignoredRouteFiles: ["**/.*"],
     }),
     tsconfigPaths(),
   ],
   build: {
-    target: 'ES2022',
+    target: "ES2022",
   },
 });
