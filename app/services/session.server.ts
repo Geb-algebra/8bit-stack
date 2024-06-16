@@ -1,20 +1,20 @@
-import { createCookieSessionStorage } from '@remix-run/node';
-import { ValueError } from '~/errors';
+import { createCookieSessionStorage } from "@remix-run/node";
+import { ValueError } from "~/errors";
 
-if (!process.env.SESSION_SECRET) throw new ValueError('SESSION_SECRET must be set');
+if (!process.env.SESSION_SECRET) throw new ValueError("SESSION_SECRET must be set");
 
 export const sessionStorage = createCookieSessionStorage({
   cookie: {
-    name: '__session',
+    name: "__session",
     httpOnly: true,
-    path: '/',
-    sameSite: 'lax',
+    path: "/",
+    sameSite: "lax",
     secrets: [process.env.SESSION_SECRET],
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === "production",
   },
 });
 
 export const getSession = async (request: Request) => {
-  const cookie = request.headers.get('Cookie');
+  const cookie = request.headers.get("Cookie");
   return sessionStorage.getSession(cookie);
 };

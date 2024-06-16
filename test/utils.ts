@@ -1,6 +1,6 @@
-import { prisma } from '~/db.server.ts';
+import { prisma } from "~/db.server.ts";
 
-import config from '../playwright.config.ts';
+import config from "../playwright.config.ts";
 
 export async function resetDB() {
   // execSync('npx prisma migrate reset --force');  // waste too much time
@@ -9,5 +9,5 @@ export async function resetDB() {
 }
 
 export function ignoreQueryRegExp(url: string) {
-  return new RegExp(`^${config.use?.baseURL}${url}(?:\\?.*)?$`, 'i');
+  return new RegExp(`^${config.use?.baseURL}${url}(?:\\?.*)?$`, "i");
 }

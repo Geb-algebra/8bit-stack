@@ -1,23 +1,23 @@
-import type { LoaderFunctionArgs, SerializeFrom, MetaFunction } from '@remix-run/node';
-import { json } from '@remix-run/node';
-import { useLoaderData, useFetcher, Link } from '@remix-run/react';
-import { useState } from 'react';
-import AuthFormInput from '~/components/AuthFormInput.tsx';
-import Icon from '~/components/Icon.tsx';
-import Overlay from '~/components/Overlay.tsx';
-import type { Authenticator } from '~/accounts/models/account.ts';
-import { AccountRepository } from '~/accounts/lifecycle/account.server.ts';
-import { authenticator } from '~/services/auth.server.ts';
-import AuthButton from '~/components/AuthButton.tsx';
-import PasskeyHero from '~/components/PasskeyHero.tsx';
+import type { LoaderFunctionArgs, MetaFunction, SerializeFrom } from "@remix-run/node";
+import { json } from "@remix-run/node";
+import { Link, useFetcher, useLoaderData } from "@remix-run/react";
+import { useState } from "react";
+import { AccountRepository } from "~/accounts/lifecycle/account.server.ts";
+import type { Authenticator } from "~/accounts/models/account.ts";
+import AuthButton from "~/components/AuthButton.tsx";
+import AuthFormInput from "~/components/AuthFormInput.tsx";
+import Icon from "~/components/Icon.tsx";
+import Overlay from "~/components/Overlay.tsx";
+import PasskeyHero from "~/components/PasskeyHero.tsx";
+import { authenticator } from "~/services/auth.server.ts";
 
-import type { action as passkeyAction } from '~/routes/_main.settings.passkey.tsx';
-import { ObjectNotFoundError } from '~/errors';
+import { ObjectNotFoundError } from "~/errors";
+import type { action as passkeyAction } from "~/routes/_main.settings.passkey.tsx";
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const user = await authenticator.isAuthenticated(request, { failureRedirect: '/welcome' });
+  const user = await authenticator.isAuthenticated(request, { failureRedirect: "/welcome" });
   const account = await AccountRepository.getById(user.id);
-  if (!account) throw new ObjectNotFoundError('Account not found');
+  if (!account) throw new ObjectNotFoundError("Account not found");
   return json({
     user,
     authenticators: account.authenticators,
@@ -25,7 +25,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export const meta: MetaFunction = () => {
-  return [{ title: 'Settings' }];
+  return [{ title: "Settings" }];
 };
 
 function Passkey(props: { authenticator: SerializeFrom<Authenticator> }) {
@@ -38,12 +38,12 @@ function Passkey(props: { authenticator: SerializeFrom<Authenticator> }) {
       key={props.authenticator.credentialID}
     >
       <div className="mr-auto">
-        <p>{props.authenticator.name ?? 'Unnamed'}</p>
+        <p>{props.authenticator.name ?? "Unnamed"}</p>
         <p className="text-gray-500">
-          Created at{' '}
+          Created at{" "}
           {props.authenticator.createdAt
             ? new Date(props.authenticator.createdAt).toLocaleString()
-            : 'Unknown'}
+            : "Unknown"}
         </p>
       </div>
       <button onClick={() => setIsPasskeyEditing(true)}>

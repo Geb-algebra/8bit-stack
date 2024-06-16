@@ -1,18 +1,18 @@
-import { createId } from '@paralleldrive/cuid2';
+import { createId } from "@paralleldrive/cuid2";
 
-import { prisma } from '~/db.server.ts';
-import type { Account, Authenticator, User } from '../models/account.ts';
-import { isUsernameAvailable } from '~/services/auth.server.ts';
+import { prisma } from "~/db.server.ts";
+import { isUsernameAvailable } from "~/services/auth.server.ts";
+import type { Account, Authenticator, User } from "../models/account.ts";
 
 export class UserRepository {
-  static async getById(id: User['id']) {
+  static async getById(id: User["id"]) {
     const _user = await prisma.user.findUnique({ where: { id } });
     if (!_user) return null;
     const { createdAt, updatedAt, ...user } = _user;
     return user;
   }
 
-  static async getByName(name: User['name']) {
+  static async getByName(name: User["name"]) {
     const _user = await prisma.user.findUnique({ where: { name } });
     if (!_user) return null;
     const { createdAt, updatedAt, ...user } = _user;
@@ -42,13 +42,13 @@ export class AccountFactory {
     googleProfileId = null,
     authenticators = [],
   }: {
-    name: User['name'];
-    id?: User['id'];
-    googleProfileId?: User['googleProfileId'];
+    name: User["name"];
+    id?: User["id"];
+    googleProfileId?: User["googleProfileId"];
     authenticators?: Authenticator[];
   }): Promise<Account> {
     if (!(await isUsernameAvailable(name))) {
-      throw new Error('username already taken');
+      throw new Error("username already taken");
     }
     return {
       id: id ?? (await this.generateId()),
@@ -61,7 +61,7 @@ export class AccountFactory {
 
 export class AccountRepository {
   private static async _get(
-    where: { id: User['id'] } | { name: User['name'] },
+    where: { id: User["id"] } | { name: User["name"] },
   ): Promise<Account | null> {
     const accountRecord = await prisma.user.findUnique({
       where,
@@ -75,21 +75,21 @@ export class AccountRepository {
       ...user,
       authenticators: authenticators.map((authenticator) => ({
         ...authenticator,
-        transports: authenticator.transports.split(','),
+        transports: authenticator.transports.split(","),
       })),
     };
     return account;
   }
 
-  static async getById(id: Account['id']) {
+  static async getById(id: Account["id"]) {
     return await this._get({ id });
   }
 
-  static async getByName(name: Account['name']) {
+  static async getByName(name: Account["name"]) {
     return await this._get({ name });
   }
 
-  static async getByGoogleProfileId(googleProfileId: Account['googleProfileId']) {
+  static async getByGoogleProfileId(googleProfileId: Account["googleProfileId"]) {
     const accountRecord = await prisma.user.findFirst({
       where: {
         googleProfileId,
@@ -104,7 +104,7 @@ export class AccountRepository {
       ...user,
       authenticators: authenticators.map((authenticator) => ({
         ...authenticator,
-        transports: authenticator.transports.split(','),
+        transports: authenticator.transports.split(","),
       })),
     };
     return account;
@@ -120,7 +120,7 @@ export class AccountRepository {
       });
       const newAuthenticators = authenticators.map((a) => ({
         ...a,
-        transports: a.transports.join(','),
+        transports: a.transports.join(","),
       }));
       const existingAuthenticators = await prisma.authenticator.findMany({
         where: { userId: account.id },

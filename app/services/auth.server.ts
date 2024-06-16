@@ -1,21 +1,21 @@
-import { verifyRegistrationResponse } from '~/utils/simplewebauthn.server.ts';
-import type { RegistrationResponseJSON } from '@simplewebauthn/typescript-types';
-import { Authenticator } from 'remix-auth';
-import invariant from 'tiny-invariant';
-import type { User } from '../accounts/models/account.ts';
+import type { RegistrationResponseJSON } from "@simplewebauthn/typescript-types";
+import { Authenticator } from "remix-auth";
+import invariant from "tiny-invariant";
 import {
-  UserRepository,
   AccountFactory,
   AccountRepository,
-} from '~/accounts/lifecycle/account.server.ts';
+  UserRepository,
+} from "~/accounts/lifecycle/account.server.ts";
+import { verifyRegistrationResponse } from "~/utils/simplewebauthn.server.ts";
+import type { User } from "../accounts/models/account.ts";
 
-import { getSession, sessionStorage } from '~/services/session.server.ts';
-import { getAuthenticatorById } from '~/accounts/lifecycle/authenticator.server.ts';
-import { GoogleStrategy } from 'remix-auth-google';
-import { WebAuthnStrategy } from 'remix-auth-webauthn';
-import { IntegrityError, ObjectNotFoundError, ValueError } from '~/errors.ts';
+import { GoogleStrategy } from "remix-auth-google";
+import { WebAuthnStrategy } from "remix-auth-webauthn";
+import { getAuthenticatorById } from "~/accounts/lifecycle/authenticator.server.ts";
+import { IntegrityError, ObjectNotFoundError, ValueError } from "~/errors.ts";
+import { getSession, sessionStorage } from "~/services/session.server.ts";
 
-export let authenticator = new Authenticator<User>(sessionStorage);
+export const authenticator = new Authenticator<User>(sessionStorage);
 
 export async function isUsernameAvailable(username: string) {
   const user = await UserRepository.getByName(username);
@@ -23,9 +23,9 @@ export async function isUsernameAvailable(username: string) {
 }
 
 // we reuse them to add new passkeys to authenticated users
-export const WEBAUTHN_RP_NAME = '8bit Stack';
+export const WEBAUTHN_RP_NAME = "8bit Stack";
 // http://localhost:3000 -> localhost, https://8bitstack.com -> 8bitstack.com
-export const WEBAUTHN_RP_ID = process.env.APP_URL!.split('://')[1].split(':')[0];
+export const WEBAUTHN_RP_ID = process.env.APP_URL!.split("://")[1].split(":")[0];
 export const WEBAUTHN_ORIGIN = process.env.APP_URL!;
 
 export const webAuthnStrategy = new WebAuthnStrategy<User>(
@@ -53,41 +53,41 @@ export const webAuthnStrategy = new WebAuthnStrategy<User>(
     getUserByUsername: (username) => UserRepository.getByName(username),
     getAuthenticatorById: async (id) => {
       const authenticator = await getAuthenticatorById(id);
-      invariant(authenticator, 'Authenticator not found');
-      return { ...authenticator, transports: authenticator.transports.join(',') };
+      invariant(authenticator, "Authenticator not found");
+      return { ...authenticator, transports: authenticator.transports.join(",") };
     },
   },
   async ({ authenticator, type, username }) => {
     const savedAuthenticator = await getAuthenticatorById(authenticator.credentialID);
-    if (type === 'registration') {
+    if (type === "registration") {
       // Check if the authenticator exists in the database
       if (savedAuthenticator) {
-        throw new IntegrityError('Authenticator has already been registered.');
+        throw new IntegrityError("Authenticator has already been registered.");
       }
-      invariant(username, 'Username is required.');
+      invariant(username, "Username is required.");
       const { authenticators, ...user } = await AccountFactory.create({
         name: username,
         authenticators: [
-          { ...authenticator, transports: authenticator.transports.split(','), name: null },
+          { ...authenticator, transports: authenticator.transports.split(","), name: null },
         ],
       });
       await AccountRepository.save({ authenticators, ...user });
       return user;
-    } else if (type === 'authentication') {
-      if (!savedAuthenticator) throw new ObjectNotFoundError('Authenticator not found');
+    } else if (type === "authentication") {
+      if (!savedAuthenticator) throw new ObjectNotFoundError("Authenticator not found");
       const account = await AccountRepository.getById(savedAuthenticator.userId);
-      if (!account) throw new ObjectNotFoundError('Account not found');
+      if (!account) throw new ObjectNotFoundError("Account not found");
       const { authenticators, ...user } = account;
       return user;
     } else {
-      throw new ValueError('Invalid verification type');
+      throw new ValueError("Invalid verification type");
     }
   },
 );
 
-authenticator.use(webAuthnStrategy, 'webauthn');
+authenticator.use(webAuthnStrategy, "webauthn");
 
-let googleStrategy = new GoogleStrategy(
+const googleStrategy = new GoogleStrategy(
   {
     clientID: process.env.GOOGLE_AUTH_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_AUTH_CLIENT_SECRET!,
@@ -111,7 +111,7 @@ let googleStrategy = new GoogleStrategy(
   },
 );
 
-authenticator.use(googleStrategy, 'google');
+authenticator.use(googleStrategy, "google");
 
 export async function getAuthErrorMessage(request: Request) {
   const session = await getSession(request);
@@ -127,7 +127,7 @@ export async function verifyNewAuthenticator(
 ) {
   const verification = await verifyRegistrationResponse({
     response: responseData as RegistrationResponseJSON,
-    expectedChallenge: expectedChallenge ?? '',
+    expectedChallenge: expectedChallenge ?? "",
     expectedOrigin: WEBAUTHN_ORIGIN,
     expectedRPID: WEBAUTHN_RP_ID,
   });
@@ -137,19 +137,19 @@ export async function verifyNewAuthenticator(
       verification.registrationInfo;
 
     const newAuthenticator = {
-      credentialID: Buffer.from(credentialID).toString('base64url'),
-      credentialPublicKey: Buffer.from(credentialPublicKey).toString('base64url'),
+      credentialID: Buffer.from(credentialID).toString("base64url"),
+      credentialPublicKey: Buffer.from(credentialPublicKey).toString("base64url"),
       counter,
       credentialBackedUp: credentialBackedUp ? 1 : 0,
       credentialDeviceType,
-      transports: [''],
+      transports: [""],
     };
     const savedAuthenticator = await getAuthenticatorById(newAuthenticator.credentialID);
     if (savedAuthenticator) {
-      throw new IntegrityError('Authenticator has already been registered.');
+      throw new IntegrityError("Authenticator has already been registered.");
     }
     return newAuthenticator;
   } else {
-    throw new ValueError('Passkey verification failed.');
+    throw new ValueError("Passkey verification failed.");
   }
 }
