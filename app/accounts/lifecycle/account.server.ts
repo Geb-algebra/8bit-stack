@@ -51,7 +51,7 @@ export class AccountFactory {
       throw new Error("username already taken");
     }
     return {
-      id: id ?? (await this.generateId()),
+      id: id ?? (await AccountFactory.generateId()),
       name,
       googleProfileId,
       authenticators,
@@ -82,11 +82,11 @@ export class AccountRepository {
   }
 
   static async getById(id: Account["id"]) {
-    return await this._get({ id });
+    return await AccountRepository._get({ id });
   }
 
   static async getByName(name: Account["name"]) {
-    return await this._get({ name });
+    return await AccountRepository._get({ name });
   }
 
   static async getByGoogleProfileId(googleProfileId: Account["googleProfileId"]) {

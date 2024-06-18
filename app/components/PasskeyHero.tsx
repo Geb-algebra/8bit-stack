@@ -9,7 +9,7 @@ function QandA(props: { question: string; answer: string }) {
 
 export default function PasskeyHero(props: { className?: string }) {
   return (
-    <ul className={"bg-gray-300 rounded-lg px-4 py-2 " + (props.className ?? "")}>
+    <ul className={`bg-gray-300 rounded-lg px-4 py-2 ${props.className ?? ""}`}>
       <li className="my-2">
         <p>
           Passkeys are encrypted digital keys you create using your fingerprint, face, or screen

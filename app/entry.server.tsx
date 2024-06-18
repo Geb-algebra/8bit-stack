@@ -54,6 +54,7 @@ function handleBotRequest(
           reject(error);
         },
         onError(error: unknown) {
+          // biome-ignore lint/style/noParameterAssign: this is remix-provided default code. Im not shre how to fix it ... 😐
           responseStatusCode = 500;
           console.error(error);
         },
@@ -70,7 +71,7 @@ function handleBrowserRequest(
   responseHeaders: Headers,
   remixContext: EntryContext,
 ) {
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const { pipe, abort } = renderToPipeableStream(
       <RemixServer context={remixContext} url={request.url} abortDelay={ABORT_DELAY} />,
       {
@@ -92,8 +93,9 @@ function handleBrowserRequest(
           reject(error);
         },
         onError(error: unknown) {
-          console.error(error);
+          // biome-ignore lint/style/noParameterAssign: this is remix-provided default code. Im not shre how to fix it ... 😐
           responseStatusCode = 500;
+          console.error(error);
         },
       },
     );
