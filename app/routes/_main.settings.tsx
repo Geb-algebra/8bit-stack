@@ -18,17 +18,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: "/welcome" });
   const account = await AccountRepository.getById(user.id);
   if (!account) throw new ObjectNotFoundError("Account not found");
-  return json({
+  return {
     user,
     authenticators: account.authenticators,
-  });
+  };
 }
 
 export const meta: MetaFunction = () => {
   return [{ title: "Settings" }];
 };
 
-function Passkey(props: { authenticator: SerializeFrom<Authenticator> }) {
+function Passkey(props: { authenticator: Authenticator }) {
   const fetcher = useFetcher<typeof passkeyAction>();
   const [isPasskeyEditing, setIsPasskeyEditing] = useState(false);
   const [isPasskeyDeleting, setIsPasskeyDeleting] = useState(false);

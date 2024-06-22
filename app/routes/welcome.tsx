@@ -5,7 +5,7 @@ import { authenticator } from "~/services/auth.server.ts";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await authenticator.isAuthenticated(request, { successRedirect: "/" });
-  return json({});
+  return null;
 }
 
 export const meta: MetaFunction = () => {

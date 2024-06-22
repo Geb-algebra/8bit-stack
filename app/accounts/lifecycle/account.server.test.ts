@@ -54,8 +54,9 @@ describe("AccountFactory", () => {
             credentialPublicKey: "testCredentialPublicKey",
             counter: 0,
             credentialDeviceType: "testCredentialDeviceType",
-            credentialBackedUp: 0,
+            credentialBackedUp: false,
             transports: ["testTransports", "testTransports2"],
+            aaguid: "testAaguid",
           },
         ],
       });
@@ -95,8 +96,9 @@ describe("AccountFactory", () => {
           credentialPublicKey: "testCredentialPublicKey",
           counter: 0,
           credentialDeviceType: "testCredentialDeviceType",
-          credentialBackedUp: 0,
+          credentialBackedUp: false,
           transports: ["testTransports", "testTransports2"],
+          aaguid: "testAaguid",
         },
       ],
     });
@@ -136,8 +138,9 @@ describe("AccountRepository", () => {
           credentialPublicKey: "testCredentialPublicKey",
           counter: 0,
           credentialDeviceType: "testCredentialDeviceType",
-          credentialBackedUp: 0,
+          credentialBackedUp: false,
           transports: ["testTransports", "testTransports2"],
+          aaguid: "testAaguid",
         },
       ],
     });
@@ -163,7 +166,7 @@ describe("AccountRepository", () => {
           credentialPublicKey: "testCredentialPublicKey",
           counter: 0,
           credentialDeviceType: "testCredentialDeviceType",
-          credentialBackedUp: 0,
+          credentialBackedUp: false,
           transports: ["testTransports", "testTransports2"],
           // @ts-expect-error
           invalidProperty: "Error!",
@@ -210,8 +213,9 @@ describe("AccountRepository", () => {
         credentialPublicKey: "testCredentialPublicKey",
         counter: 0,
         credentialDeviceType: "testCredentialDeviceType",
-        credentialBackedUp: 0,
+        credentialBackedUp: false,
         transports: ["testTransports", "testTransports2"],
+        aaguid: "testAaguid",
       },
     ];
     await AccountRepository.save(savedAccount);
@@ -231,8 +235,9 @@ describe("AccountRepository", () => {
           credentialPublicKey: "testCredentialPublicKey",
           counter: 0,
           credentialDeviceType: "testCredentialDeviceType",
-          credentialBackedUp: 0,
+          credentialBackedUp: false,
           transports: ["testTransports", "testTransports2"],
+          aaguid: "testAaguid",
         },
       ],
     });
@@ -247,8 +252,9 @@ describe("AccountRepository", () => {
         credentialPublicKey: "testCredentialPublicKey2",
         counter: 0,
         credentialDeviceType: "testCredentialDeviceType2",
-        credentialBackedUp: 0,
+        credentialBackedUp: false,
         transports: ["testTransports2", "testTransports3"],
+        aaguid: "testAaguid",
       },
     ];
     await AccountRepository.save(account);
@@ -272,8 +278,9 @@ describe("AccountRepository", () => {
           credentialPublicKey: "testCredentialPublicKey",
           counter: 0,
           credentialDeviceType: "testCredentialDeviceType",
-          credentialBackedUp: 0,
+          credentialBackedUp: false,
           transports: ["testTransports", "testTransports2"],
+          aaguid: "testAaguid",
         },
       ],
     });

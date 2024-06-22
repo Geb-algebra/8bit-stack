@@ -13,7 +13,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   });
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request, response }: ActionFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: "/welcome" });
   const account = await AccountRepository.getById(user.id);
   if (!account) throw new ObjectNotFoundError("Account not found");
@@ -37,5 +37,8 @@ export async function action({ request }: ActionFunctionArgs) {
     account.authenticators = account.authenticators.filter((a) => a.credentialID !== passkeyId);
     await AccountRepository.save(account);
   }
-  return redirect("/settings");
+  invariant(response);
+  response.status = 302;
+  response.headers.set("Location", "/settings");
+  throw response;
 }

@@ -145,16 +145,23 @@ export async function verifyNewAuthenticator(
   });
 
   if (verification.verified && verification.registrationInfo) {
-    const { credentialPublicKey, credentialID, counter, credentialBackedUp, credentialDeviceType } =
-      verification.registrationInfo;
+    const {
+      credentialPublicKey,
+      credentialID,
+      counter,
+      credentialBackedUp,
+      credentialDeviceType,
+      aaguid,
+    } = verification.registrationInfo;
 
     const newAuthenticator = {
       credentialID: Buffer.from(credentialID).toString("base64url"),
       credentialPublicKey: Buffer.from(credentialPublicKey).toString("base64url"),
       counter,
-      credentialBackedUp: credentialBackedUp ? 1 : 0,
+      credentialBackedUp,
       credentialDeviceType,
       transports: [""],
+      aaguid,
     };
     const savedAuthenticator = await getAuthenticatorById(newAuthenticator.credentialID);
     if (savedAuthenticator) {

@@ -6,34 +6,44 @@ import AuthFormInput from "~/components/AuthFormInput.tsx";
 
 import { createId } from "@paralleldrive/cuid2";
 import { handleFormSubmit } from "remix-auth-webauthn/browser";
+import invariant from "tiny-invariant";
 import AuthButton from "~/components/AuthButton.tsx";
 import AuthContainer from "~/components/AuthContainer.tsx";
 import AuthErrorMessage from "~/components/AuthErrorMessage.tsx";
 import GoogleAuthButton from "~/components/GoogleAuthButton.tsx";
 import PasskeyHero from "~/components/PasskeyHero.tsx";
 import { authenticator, webAuthnStrategy } from "~/services/auth.server.ts";
-import { sessionStorage } from "~/services/session.server.ts";
+import { getSession, sessionStorage } from "~/services/session.server.ts";
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request, response }: LoaderFunctionArgs) {
   await authenticator.isAuthenticated(request, { successRedirect: "/" });
-  return webAuthnStrategy.generateOptions(request, sessionStorage, null);
+  const session = await getSession(request);
+  const options = await webAuthnStrategy.generateOptions(request, null);
+  session.set("challenge", options.challenge);
+  invariant(response);
+  response.headers.set("Cache-Control", "no-store");
+  response.headers.set("Set-Cookie", await sessionStorage.commitSession(session));
+  return options;
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request, response }: ActionFunctionArgs) {
   try {
     await authenticator.authenticate("webauthn", request, {
       successRedirect: "/",
     });
-    return json({ errorMessage: "" });
+    return { errorMessage: "" };
   } catch (error) {
+    invariant(response);
     // Because redirects work by throwing a Response, you need to check if the
     // caught error is a response and return it or throw it again
-    if (error instanceof Response) return error;
+    if (error instanceof Response) throw error;
     console.error(error);
     if (error instanceof Error) {
-      return json({ errorMessage: error.message }, { status: 400 });
+      response.status = 400;
+      return { errorMessage: error.message };
     }
-    return json({ errorMessage: "unknown error" }, { status: 500 });
+    response.status = 500;
+    return { errorMessage: "unknown error" };
   }
 }
 

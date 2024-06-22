@@ -8,7 +8,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/welcome",
   });
-  return json(user);
+  return user;
 }
 
 export const meta: MetaFunction = () => {

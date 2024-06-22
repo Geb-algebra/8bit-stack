@@ -7,11 +7,17 @@ import AuthContainer from "~/components/AuthContainer.tsx";
 import AuthErrorMessage from "~/components/AuthErrorMessage.tsx";
 import GoogleAuthButton from "~/components/GoogleAuthButton.tsx";
 import { authenticator, webAuthnStrategy } from "~/services/auth.server.ts";
-import { sessionStorage } from "~/services/session.server.ts";
+import { getSession, sessionStorage } from "~/services/session.server.ts";
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request, response }: LoaderFunctionArgs) {
   await authenticator.isAuthenticated(request, { successRedirect: "/" });
-  return webAuthnStrategy.generateOptions(request, sessionStorage, null);
+  const session = await getSession(request);
+  const options = await webAuthnStrategy.generateOptions(request, null);
+  session.set("challenge", options.challenge);
+  response?.headers.append("Set-Cookie", await sessionStorage.commitSession(session));
+  response?.headers.append("Cache-Control", "no-store");
+
+  return options;
 }
 
 export async function action({ request }: ActionFunctionArgs) {
