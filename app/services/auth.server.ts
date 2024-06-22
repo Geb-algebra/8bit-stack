@@ -9,6 +9,7 @@ import {
 import { verifyRegistrationResponse } from "~/utils/simplewebauthn.server.ts";
 import type { User } from "../accounts/models/account.ts";
 
+import { isoBase64URL } from "@simplewebauthn/server/helpers";
 import { GoogleStrategy } from "remix-auth-google";
 import { WebAuthnStrategy } from "remix-auth-webauthn";
 import { getAuthenticatorById } from "~/accounts/lifecycle/authenticator.server.ts";
@@ -155,8 +156,8 @@ export async function verifyNewAuthenticator(
     } = verification.registrationInfo;
 
     const newAuthenticator = {
-      credentialID: Buffer.from(credentialID).toString("base64url"),
-      credentialPublicKey: Buffer.from(credentialPublicKey).toString("base64url"),
+      credentialID,
+      credentialPublicKey: isoBase64URL.fromBuffer(credentialPublicKey),
       counter,
       credentialBackedUp,
       credentialDeviceType,

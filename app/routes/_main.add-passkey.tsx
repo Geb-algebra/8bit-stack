@@ -1,3 +1,4 @@
+import { createId } from "@paralleldrive/cuid2";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json, redirect } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
@@ -77,7 +78,12 @@ export default function Page() {
         <div className="flex flex-col gap-6">
           <AuthErrorMessage message={actionData?.error.message} />
           <AuthContainer>
-            <Form method="post" onSubmit={handleFormSubmit(options)}>
+            <Form
+              method="post"
+              onSubmit={handleFormSubmit(options, {
+                generateUserId: createId,
+              })}
+            >
               <input type="hidden" name="username" value={options.user?.username} />
               <AuthButton type="submit" name="intent" value="registration">
                 Create a New Passkey
