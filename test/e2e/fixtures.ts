@@ -7,6 +7,7 @@ import { googleProfileId, username } from "./consts.ts";
 
 import { resetDB } from "test/utils.ts";
 import invariant from "tiny-invariant";
+import { prisma } from "~/db.server.ts";
 
 export const test = base.extend({
   // Extend the base test with a new "login" method.
@@ -17,7 +18,7 @@ export const test = base.extend({
     });
     await AccountRepository.save(account);
     await use(page);
-    await resetDB();
+    await resetDB(prisma);
   },
   loggedInPage: async ({ page, baseURL }, use) => {
     // referred to https://github.com/kentcdodds/kentcdodds.com/blob/main/e2e/utils.ts
@@ -44,15 +45,15 @@ export const test = base.extend({
       },
     ]);
     await use(page);
-    await resetDB();
+    await resetDB(prisma);
   },
 });
 
 test.beforeEach(async () => {
-  await resetDB();
+  await resetDB(prisma);
 });
 test.afterAll(async () => {
-  await resetDB();
+  await resetDB(prisma);
 });
 
 export { expect } from "@playwright/test";
