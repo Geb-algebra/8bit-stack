@@ -1,16 +1,20 @@
-import type { LoaderFunctionArgs, MetaFunction, SerializeFrom } from "@remix-run/node";
-import { json } from "@remix-run/node";
+import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
-import { useState } from "react";
 import { AccountRepository } from "~/accounts/lifecycle/account.server.ts";
 import type { Authenticator } from "~/accounts/models/account.ts";
-import AuthButton from "~/components/AuthButton.tsx";
-import AuthFormInput from "~/components/AuthFormInput.tsx";
 import Icon from "~/components/Icon.tsx";
-import Overlay from "~/components/Overlay.tsx";
 import PasskeyHero from "~/components/PasskeyHero.tsx";
 import { authenticator } from "~/services/auth.server.ts";
 
+import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
+import { Input } from "~/components/ui/input";
 import { ObjectNotFoundError } from "~/errors";
 import type { action as passkeyAction } from "~/routes/_main.settings.passkey.tsx";
 
@@ -30,8 +34,6 @@ export const meta: MetaFunction = () => {
 
 function Passkey(props: { authenticator: Authenticator }) {
   const fetcher = useFetcher<typeof passkeyAction>();
-  const [isPasskeyEditing, setIsPasskeyEditing] = useState(false);
-  const [isPasskeyDeleting, setIsPasskeyDeleting] = useState(false);
   return (
     <li
       className="flex items-center gap-6 px-4 py-4 rounded-lg border border-gray-300"
@@ -46,47 +48,44 @@ function Passkey(props: { authenticator: Authenticator }) {
             : "Unknown"}
         </p>
       </div>
-      <button type="button" onClick={() => setIsPasskeyEditing(true)}>
-        <Icon name="edit" />
-      </button>
-      <button type="button" onClick={() => setIsPasskeyDeleting(true)}>
-        <Icon name="delete" />
-      </button>
-      <Overlay isShown={isPasskeyEditing} setIsShown={setIsPasskeyEditing}>
-        <div className="w-96 rounded-lg border border-gray-300 bg-white">
-          <p className="mx-6 my-6 text-2xl font-bold">Edit Passkey</p>
-          <fetcher.Form
-            method="put"
-            action="/settings/passkey"
-            className="mx-6 my-6"
-            onSubmit={() => setIsPasskeyEditing(false)}
-          >
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button type="button" variant="ghost" size="icon">
+            <Icon name="edit" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogTitle>Edit Passkey</DialogTitle>
+          <fetcher.Form method="put" action="/settings/passkey">
             <input
               type="hidden"
               name="passkey-id"
               id="passkey-id"
               value={props.authenticator.credentialID}
             />
-            <AuthFormInput
+            <Input
               name="passkey-name"
-              label="Passkey name"
               id="passkey-name"
+              placeholder="Passkey Name"
               type="text"
               className="mb-6"
             />
-            <AuthButton type="submit">Update Passkey</AuthButton>
+            <DialogClose asChild>
+              <Button type="submit">Update Passkey</Button>
+            </DialogClose>
           </fetcher.Form>
-        </div>
-      </Overlay>
-      <Overlay isShown={isPasskeyDeleting} setIsShown={setIsPasskeyDeleting}>
-        <div className="w-96 rounded-lg border border-gray-300 bg-white">
-          <p className="mx-6 my-6 text-2xl font-bold">Delete Passkey</p>
-          <fetcher.Form
-            method="delete"
-            action="/settings/passkey"
-            className="mx-6 my-6"
-            onSubmit={() => setIsPasskeyDeleting(false)}
-          >
+        </DialogContent>
+      </Dialog>
+
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button type="button" variant="ghost" size="icon">
+            <Icon name="delete" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogTitle>Delete Passkey</DialogTitle>
+          <fetcher.Form method="delete" action="/settings/passkey">
             <input
               type="hidden"
               name="passkey-id"
@@ -96,10 +95,14 @@ function Passkey(props: { authenticator: Authenticator }) {
             <p className="text-red-500 mb-6">
               {`Are you sure you want to delete passkey ${props.authenticator.name} ?`}
             </p>
-            <AuthButton type="submit">Delete Passkey</AuthButton>
+            <DialogClose asChild>
+              <Button type="submit" variant="destructive">
+                Delete Passkey
+              </Button>
+            </DialogClose>
           </fetcher.Form>
-        </div>
-      </Overlay>
+        </DialogContent>
+      </Dialog>
     </li>
   );
 }

@@ -1,17 +1,16 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
+import { type LoaderFunctionArgs, type MetaFunction, unstable_defineAction } from "@remix-run/node";
 
-import { json } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
-import AuthFormInput from "~/components/AuthFormInput.tsx";
 
 import { createId } from "@paralleldrive/cuid2";
 import { handleFormSubmit } from "remix-auth-webauthn/browser";
 import invariant from "tiny-invariant";
-import AuthButton from "~/components/AuthButton.tsx";
-import AuthContainer from "~/components/AuthContainer.tsx";
-import AuthErrorMessage from "~/components/AuthErrorMessage.tsx";
-import GoogleAuthButton from "~/components/GoogleAuthButton.tsx";
 import PasskeyHero from "~/components/PasskeyHero.tsx";
+import Google from "~/components/icons/Google";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
+import { Separator } from "~/components/ui/separator";
 import { authenticator, webAuthnStrategy } from "~/services/auth.server.ts";
 import { getSession, sessionStorage } from "~/services/session.server.ts";
 
@@ -26,78 +25,91 @@ export async function loader({ request, response }: LoaderFunctionArgs) {
   return options;
 }
 
-export async function action({ request, response }: ActionFunctionArgs) {
+export const action = unstable_defineAction(async ({ request, response }) => {
   try {
     await authenticator.authenticate("webauthn", request, {
       successRedirect: "/",
     });
-    return { errorMessage: "" };
+    return { message: "" };
   } catch (error) {
-    invariant(response);
     // Because redirects work by throwing a Response, you need to check if the
     // caught error is a response and return it or throw it again
-    if (error instanceof Response) throw error;
+    if (error instanceof Response && error.status < 400) throw error;
+    if (error instanceof Response) {
+      response.status = error.status;
+      return (await error.json()) as { message: string };
+    }
     console.error(error);
     if (error instanceof Error) {
       response.status = 400;
-      return { errorMessage: error.message };
+      return { message: error.message };
     }
     response.status = 500;
-    return { errorMessage: "unknown error" };
+    return { message: "unknown error" };
   }
-}
+});
 
 export const meta: MetaFunction = () => {
   return [{ title: "Sign Up" }];
 };
 
-export default function LoginPage() {
+export default function SignupPage() {
   const options = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   return (
-    <div className="flex flex-col gap-6">
-      <AuthContainer>
+    <Card>
+      <CardHeader>
+        <CardTitle>Signup</CardTitle>
+      </CardHeader>
+      <CardContent>
         <Form method="post" action="/google">
-          <GoogleAuthButton>Signup with Google</GoogleAuthButton>
+          <Button type="submit" className="w-full">
+            <Google className="w-6 mr-2" />
+            Signup with Google
+          </Button>
         </Form>
-      </AuthContainer>
-      <AuthErrorMessage
-        message={
-          actionData?.errorMessage ??
-          (options.usernameAvailable === false ? "Username already taken" : "")
-        }
-      />
-      <AuthContainer>
-        <h2 className="text-xl font-semibold">Signup with Passkey</h2>
+        <Separator className="my-6" />
+
+        <h2 className="text-xl font-semibold my-4">Signup with Passkey</h2>
         <Form
-          className="flex flex-col gap-6"
           method="post"
           onSubmit={handleFormSubmit(options, {
             generateUserId: createId,
           })}
+          className="space-y-6"
         >
+          <p className="text-red-600">
+            {actionData?.message ??
+              (options.usernameAvailable === false ? "Username already taken" : "")}
+          </p>
           <div>
-            <AuthFormInput
+            <Input
               name="username"
-              label="Username"
               id="username"
+              placeholder="Username"
               type="text"
-              readonly={options.usernameAvailable ?? false}
-              autofocus={true}
+              readOnly={options.usernameAvailable ?? false}
+              autoFocus
+              required
             />
           </div>
-          <AuthButton formMethod="GET" disabled={options.usernameAvailable ?? undefined}>
+          <Button
+            type="submit"
+            formMethod="GET"
+            disabled={options.usernameAvailable ?? false}
+            className="w-full"
+          >
             Check Username
-          </AuthButton>
+          </Button>
           {options.usernameAvailable ? (
-            <AuthButton type="submit" name="intent" value="registration">
+            <Button type="submit" name="intent" value="registration" className="w-full">
               Signup with Passkey
-            </AuthButton>
+            </Button>
           ) : null}
-          <PasskeyHero className="mt-6" />
+          <PasskeyHero />
         </Form>
-      </AuthContainer>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
