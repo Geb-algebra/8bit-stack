@@ -1,15 +1,13 @@
 import { createId } from "@paralleldrive/cuid2";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import type { RegistrationResponseJSON } from "@simplewebauthn/typescript-types";
 import { handleFormSubmit } from "remix-auth-webauthn/browser";
 import invariant from "tiny-invariant";
 import { AccountRepository } from "~/accounts/lifecycle/account.server.ts";
-import AuthButton from "~/components/AuthButton.tsx";
-import AuthContainer from "~/components/AuthContainer.tsx";
-import AuthErrorMessage from "~/components/AuthErrorMessage.tsx";
 import PasskeyHero from "~/components/PasskeyHero.tsx";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent } from "~/components/ui/card";
 import { ObjectNotFoundError, ValueError } from "~/errors";
 import { authenticator, verifyNewAuthenticator, webAuthnStrategy } from "~/services/auth.server.ts";
 import { getSession, sessionStorage } from "~/services/session.server.ts";
@@ -75,9 +73,8 @@ export default function Page() {
   return (
     <div className="mx-auto w-full max-w-md">
       <div className="pt-24 w-full">
-        <div className="flex flex-col gap-6">
-          <AuthErrorMessage message={actionData?.error.message} />
-          <AuthContainer>
+        <Card>
+          <CardContent className="p-6 space-y-6">
             <Form
               method="post"
               onSubmit={handleFormSubmit(options, {
@@ -85,13 +82,14 @@ export default function Page() {
               })}
             >
               <input type="hidden" name="username" value={options.user?.username} />
-              <AuthButton type="submit" name="intent" value="registration">
+              <Button type="submit" name="intent" value="registration" className="w-full">
                 Create a New Passkey
-              </AuthButton>
+              </Button>
+              <p className="text-red-600">{actionData?.error.message}</p>
             </Form>
             <PasskeyHero />
-          </AuthContainer>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
