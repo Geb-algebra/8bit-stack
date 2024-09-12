@@ -10,6 +10,7 @@ import Google from "~/components/icons/Google";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
 import { authenticator, webAuthnStrategy } from "~/services/auth.server.ts";
 import { getSession, sessionStorage } from "~/services/session.server.ts";
@@ -84,15 +85,18 @@ export default function SignupPage() {
               (options.usernameAvailable === false ? "Username already taken" : "")}
           </p>
           <div>
-            <Input
-              name="username"
-              id="username"
-              placeholder="Username"
-              type="text"
-              readOnly={options.usernameAvailable ?? false}
-              autoFocus
-              required
-            />
+            <Label>
+              <Input
+                name="username"
+                id="username"
+                placeholder="Username"
+                type="text"
+                readOnly={options.usernameAvailable ?? false}
+                autoFocus
+                required
+              />
+              Username
+            </Label>
           </div>
           <Button
             type="submit"

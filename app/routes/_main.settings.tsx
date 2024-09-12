@@ -2,10 +2,11 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Link, useFetcher, useLoaderData } from "@remix-run/react";
 import { AccountRepository } from "~/accounts/lifecycle/account.server.ts";
 import type { Authenticator } from "~/accounts/models/account.ts";
-import Icon from "~/components/Icon.tsx";
 import PasskeyHero from "~/components/PasskeyHero.tsx";
 import { authenticator } from "~/services/auth.server.ts";
 
+import { Label } from "@radix-ui/react-label";
+import { Edit2Icon, TrashIcon } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -51,7 +52,7 @@ function Passkey(props: { authenticator: Authenticator }) {
       <Dialog>
         <DialogTrigger asChild>
           <Button type="button" variant="ghost" size="icon">
-            <Icon name="edit" />
+            <Edit2Icon />
           </Button>
         </DialogTrigger>
         <DialogContent>
@@ -63,13 +64,16 @@ function Passkey(props: { authenticator: Authenticator }) {
               id="passkey-id"
               value={props.authenticator.credentialID}
             />
-            <Input
-              name="passkey-name"
-              id="passkey-name"
-              placeholder="Passkey Name"
-              type="text"
-              className="mb-6"
-            />
+            <Label>
+              Passkey Name
+              <Input
+                name="passkey-name"
+                id="passkey-name"
+                placeholder="Passkey Name"
+                type="text"
+                className="mb-6"
+              />
+            </Label>
             <DialogClose asChild>
               <Button type="submit">Update Passkey</Button>
             </DialogClose>
@@ -80,7 +84,7 @@ function Passkey(props: { authenticator: Authenticator }) {
       <Dialog>
         <DialogTrigger asChild>
           <Button type="button" variant="ghost" size="icon">
-            <Icon name="delete" />
+            <TrashIcon />
           </Button>
         </DialogTrigger>
         <DialogContent>

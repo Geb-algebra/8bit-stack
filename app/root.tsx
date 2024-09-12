@@ -2,10 +2,7 @@ import type { LinksFunction } from "@remix-run/node";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
 import stylesheet from "~/styles/tailwind.css?url";
 
-export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: stylesheet },
-  { rel: "stylesheet", href: "https://fonts.googleapis.com/icon?family=Material+Icons" },
-];
+export const links: LinksFunction = () => [{ rel: "stylesheet", href: stylesheet }];
 
 function App() {
   return (
