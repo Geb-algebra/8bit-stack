@@ -4,6 +4,12 @@ import { flatRoutes } from "remix-flat-routes";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
+declare module "@remix-run/server-runtime" {
+  interface Future {
+    unstable_singleFetch: true;
+  }
+}
+
 export default defineConfig({
   server: {
     port: 3000,
@@ -24,6 +30,8 @@ export default defineConfig({
       },
       future: {
         unstable_singleFetch: true,
+        unstable_lazyRouteDiscovery: true,
+        unstable_optimizeDeps: true,
       },
     }),
     tsconfigPaths(),

@@ -1,9 +1,8 @@
 import { createId } from "@paralleldrive/cuid2";
 import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { Form, useActionData, useLoaderData } from "@remix-run/react";
+import { Form, redirect, unstable_data, useActionData, useLoaderData } from "@remix-run/react";
 import type { RegistrationResponseJSON } from "@simplewebauthn/typescript-types";
 import { handleFormSubmit } from "remix-auth-webauthn/browser";
-import invariant from "tiny-invariant";
 import { AccountRepository } from "~/accounts/lifecycle/account.server.ts";
 import PasskeyHero from "~/components/PasskeyHero.tsx";
 import { Button } from "~/components/ui/button";
@@ -13,18 +12,20 @@ import { authenticator, verifyNewAuthenticator, webAuthnStrategy } from "~/servi
 import { getSession, sessionStorage } from "~/services/session.server.ts";
 import { getRequiredStringFromFormData } from "~/utils.ts";
 
-export async function loader({ request, response }: LoaderFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: "/welcome" });
   const session = await getSession(request);
   const options = await webAuthnStrategy.generateOptions(request, user);
   session.set("challenge", options.challenge);
-  invariant(response);
-  response.headers.set("Cache-Control", "no-store");
-  response.headers.set("Set-Cookie", await sessionStorage.commitSession(session));
-  return options;
+  return unstable_data(options, {
+    headers: {
+      "Cache-Control": "no-store",
+      "Set-Cookie": await sessionStorage.commitSession(session),
+    },
+  });
 }
 
-export async function action({ request, response }: ActionFunctionArgs) {
+export async function action({ request }: ActionFunctionArgs) {
   const user = await authenticator.isAuthenticated(request, { failureRedirect: "/welcome" });
   const session = await getSession(request);
   const expectedChallenge = session.get("challenge");
@@ -50,13 +51,13 @@ export async function action({ request, response }: ActionFunctionArgs) {
       name: null,
     });
     await AccountRepository.save(account);
-    invariant(response);
-    response.status = 302;
-    response.headers.set("Location", "/settings");
-    throw response;
+    throw redirect("/settings");
   } catch (error) {
     if (error instanceof Response && error.status >= 400) {
-      return { error: (await error.json()) as { message: string } };
+      return unstable_data(
+        { error: (await error.json()) as { message: string } },
+        { status: error.status },
+      );
     }
     throw error;
   }

@@ -1,8 +1,12 @@
 import { createId } from "@paralleldrive/cuid2";
-import { type LoaderFunctionArgs, type MetaFunction, unstable_defineAction } from "@remix-run/node";
+import {
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+  type MetaFunction,
+  unstable_data,
+} from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import { handleFormSubmit } from "remix-auth-webauthn/browser";
-import invariant from "tiny-invariant";
 import PasskeyHero from "~/components/PasskeyHero";
 import Google from "~/components/icons/Google";
 import { Button } from "~/components/ui/button";
@@ -12,40 +16,42 @@ import { Separator } from "~/components/ui/separator";
 import { authenticator, webAuthnStrategy } from "~/services/auth.server.ts";
 import { getSession, sessionStorage } from "~/services/session.server.ts";
 
-export async function loader({ request, response }: LoaderFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
   await authenticator.isAuthenticated(request, { successRedirect: "/" });
   const session = await getSession(request);
   const options = await webAuthnStrategy.generateOptions(request, null);
   session.set("challenge", options.challenge);
-  invariant(response);
-  response.headers.set("Set-Cookie", await sessionStorage.commitSession(session));
-  response.headers.set("Cache-Control", "no-store");
-  return options;
+  return unstable_data(options, {
+    headers: {
+      "Cache-Control": "no-store",
+      "Set-Cookie": await sessionStorage.commitSession(session),
+    },
+  });
 }
 
-export const action = unstable_defineAction(async ({ request, response }) => {
+export async function action({ request }: ActionFunctionArgs) {
   try {
     await authenticator.authenticate("webauthn", request, {
       successRedirect: "/",
     });
-    return { message: "" };
+    // remove unstable_data after issue https://github.com/remix-run/remix/issues/9826 is fixed
+    return unstable_data({ message: "" });
   } catch (error) {
     // Because redirects work by throwing a Response, you need to check if the
     // caught error is a response and return it or throw it again
     if (error instanceof Response && error.status < 400) throw error;
     if (error instanceof Response) {
-      response.status = error.status;
-      return (await error.json()) as { message: string };
+      return unstable_data((await error.json()) as { message: string }, {
+        status: error.status,
+      });
     }
     console.error(error);
     if (error instanceof Error) {
-      response.status = 400;
-      return { message: error.message };
+      return unstable_data({ message: error.message }, { status: 400 });
     }
-    response.status = 500;
-    return { message: "unknown error" };
+    return unstable_data({ message: "unknown error" }, { status: 500 });
   }
-});
+}
 
 export const meta: MetaFunction = () => {
   return [{ title: "Log In" }];
