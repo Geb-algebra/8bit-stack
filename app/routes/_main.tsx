@@ -1,6 +1,6 @@
 import { PopoverClose } from "@radix-ui/react-popover";
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { Link, Outlet, useLoaderData } from "@remix-run/react";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
+import { Link, Outlet, useLoaderData } from "react-router";
 import { Button } from "~/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { authenticator } from "~/services/auth.server.ts";

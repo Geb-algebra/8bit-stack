@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
-import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { Form, redirect, unstable_data, useActionData, useLoaderData } from "@remix-run/react";
-import type { RegistrationResponseJSON } from "@simplewebauthn/typescript-types";
+import type { RegistrationResponseJSON } from "@simplewebauthn/types";
+import type { ActionFunctionArgs, LoaderFunctionArgs, MetaFunction } from "react-router";
+import { Form, data, redirect, useActionData, useLoaderData } from "react-router";
 import { handleFormSubmit } from "remix-auth-webauthn/browser";
 import { AccountRepository } from "~/accounts/lifecycle/account.server.ts";
 import PasskeyHero from "~/components/PasskeyHero.tsx";
@@ -17,7 +17,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const session = await getSession(request);
   const options = await webAuthnStrategy.generateOptions(request, user);
   session.set("challenge", options.challenge);
-  return unstable_data(options, {
+  return data(options, {
     headers: {
       "Cache-Control": "no-store",
       "Set-Cookie": await sessionStorage.commitSession(session),
@@ -36,7 +36,9 @@ export async function action({ request }: ActionFunctionArgs) {
     const formData = await request.formData();
     let data: RegistrationResponseJSON;
     try {
+      console.log("formData", formData);
       const responseData = getRequiredStringFromFormData(formData, "response");
+      console.log("responseData", responseData);
       data = JSON.parse(responseData);
     } catch {
       throw new ValueError("Invalid passkey response JSON.");
@@ -54,10 +56,7 @@ export async function action({ request }: ActionFunctionArgs) {
     throw redirect("/settings");
   } catch (error) {
     if (error instanceof Response && error.status >= 400) {
-      return unstable_data(
-        { error: (await error.json()) as { message: string } },
-        { status: error.status },
-      );
+      return data({ error: (await error.json()) as { message: string } }, { status: error.status });
     }
     throw error;
   }

@@ -1,6 +1,5 @@
-import { vitePlugin as remix } from "@remix-run/dev";
-import { remixDevTools } from "remix-development-tools";
-import { flatRoutes } from "remix-flat-routes";
+import { reactRouter } from "@react-router/dev/vite";
+import { reactRouterDevTools } from "react-router-devtools";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
@@ -14,28 +13,7 @@ export default defineConfig({
   server: {
     port: 3000,
   },
-  plugins: [
-    remixDevTools(),
-    remix({
-      ignoredRouteFiles: ["**/.*"],
-      routes: async (defineRoutes) => {
-        return flatRoutes("routes", defineRoutes, {
-          ignoredRouteFiles: [
-            "**/.*",
-            "**/*.test.{ts,tsx,js,jsx}",
-            "**/*.spec.{ts,tsx,js,jsx}",
-            "**/test/**",
-          ],
-        });
-      },
-      future: {
-        unstable_singleFetch: true,
-        unstable_lazyRouteDiscovery: true,
-        unstable_optimizeDeps: true,
-      },
-    }),
-    tsconfigPaths(),
-  ],
+  plugins: [reactRouterDevTools(), reactRouter(), tsconfigPaths()],
   build: {
     target: "ES2022",
   },
