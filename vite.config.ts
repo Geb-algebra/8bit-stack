@@ -29,8 +29,8 @@ export default defineConfig({
         });
       },
       future: {
-        unstable_singleFetch: true,
-        unstable_lazyRouteDiscovery: true,
+        v3_singleFetch: true,
+        v3_lazyRouteDiscovery: true,
         unstable_optimizeDeps: true,
       },
     }),
