@@ -1,10 +1,10 @@
-import { createRemixStub } from "@remix-run/testing";
 import { render, screen, waitFor } from "@testing-library/react";
+import { createRoutesStub } from "react-router";
 import Page from "~/routes/_main.tsx";
 
 describe("mainpage", () => {
   it("should display username", async () => {
-    const RemixStub = createRemixStub([
+    const RemixStub = createRoutesStub([
       {
         path: "/",
         Component: Page,
@@ -20,7 +20,7 @@ describe("mainpage", () => {
   });
 
   it("should display floating menu when user clicks on username", async () => {
-    const RemixStub = createRemixStub([
+    const RemixStub = createRoutesStub([
       {
         path: "/",
         Component: Page,

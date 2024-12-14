@@ -1,5 +1,5 @@
-import type { ActionFunction, LoaderFunction } from "@remix-run/node";
 import { screen, within } from "@testing-library/react";
+import type { ActionFunction, LoaderFunction } from "react-router";
 import { AccountFactory, AccountRepository } from "~/accounts/lifecycle/account.server";
 import { getSession, sessionStorage } from "~/services/session.server";
 

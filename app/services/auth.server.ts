@@ -1,4 +1,4 @@
-import type { RegistrationResponseJSON } from "@simplewebauthn/typescript-types";
+import type { RegistrationResponseJSON } from "@simplewebauthn/types";
 import { Authenticator } from "remix-auth";
 import invariant from "tiny-invariant";
 import {
@@ -146,19 +146,13 @@ export async function verifyNewAuthenticator(
   });
 
   if (verification.verified && verification.registrationInfo) {
-    const {
-      credentialPublicKey,
-      credentialID,
-      counter,
-      credentialBackedUp,
-      credentialDeviceType,
-      aaguid,
-    } = verification.registrationInfo;
+    const { credential, credentialBackedUp, credentialDeviceType, aaguid } =
+      verification.registrationInfo;
 
     const newAuthenticator = {
-      credentialID,
-      credentialPublicKey: isoBase64URL.fromBuffer(credentialPublicKey),
-      counter,
+      credentialID: credential.id,
+      credentialPublicKey: isoBase64URL.fromBuffer(credential.publicKey),
+      counter: credential.counter,
       credentialBackedUp,
       credentialDeviceType,
       transports: [""],

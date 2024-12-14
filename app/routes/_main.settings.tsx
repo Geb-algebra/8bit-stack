@@ -1,5 +1,5 @@
-import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
-import { Link, useFetcher, useLoaderData } from "@remix-run/react";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
+import { Link, useFetcher, useLoaderData } from "react-router";
 import { AccountRepository } from "~/accounts/lifecycle/account.server.ts";
 import type { Authenticator } from "~/accounts/models/account.ts";
 import PasskeyHero from "~/components/PasskeyHero.tsx";

@@ -1,4 +1,4 @@
-import { type LoaderFunctionArgs, type MetaFunction, json } from "@remix-run/node";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { authenticator } from "~/services/auth.server.ts";
 
 export async function loader({ request }: LoaderFunctionArgs) {

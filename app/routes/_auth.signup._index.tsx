@@ -3,9 +3,9 @@ import {
   type LoaderFunctionArgs,
   type MetaFunction,
   data,
-} from "@remix-run/node";
+} from "react-router";
 
-import { Form, useActionData, useLoaderData } from "@remix-run/react";
+import { Form, useActionData, useLoaderData } from "react-router";
 
 import { createId } from "@paralleldrive/cuid2";
 import { handleFormSubmit } from "remix-auth-webauthn/browser";

@@ -19,7 +19,8 @@
       "./coverage",
       "./test-results/",
       "./playwright-report/",
-      "./playwright/.cache/"
+      "./playwright/.cache/",
+      "./.react-router/"
     ]
   },
   "organizeImports": {
@@ -35,7 +36,8 @@
       "./coverage",
       "./test-results/",
       "./playwright-report/",
-      "./playwright/.cache/"
+      "./playwright/.cache/",
+      "./.react-router/"
     ]
   },
   "linter": {
@@ -56,7 +58,8 @@
       "./coverage",
       "./test-results/",
       "./playwright-report/",
-      "./playwright/.cache/"
+      "./playwright/.cache/",
+      "./.react-router/"
     ]
   },
   "javascript": {

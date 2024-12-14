@@ -4,8 +4,8 @@ import {
   type LoaderFunctionArgs,
   type MetaFunction,
   data,
-} from "@remix-run/node";
-import { Form, useActionData, useLoaderData } from "@remix-run/react";
+} from "react-router";
+import { Form, useActionData, useLoaderData } from "react-router";
 import { handleFormSubmit } from "remix-auth-webauthn/browser";
 import PasskeyHero from "~/components/PasskeyHero";
 import Google from "~/components/icons/Google";
@@ -80,7 +80,7 @@ export default function LoginPage() {
           })}
         >
           <p className="text-red-600">{actionData?.message}</p>
-          <Button type="submit" name="intent" value="registration" className="w-full">
+          <Button type="submit" name="intent" value="authentication" className="w-full">
             Login with Passkey
           </Button>
           <PasskeyHero className="mt-6" />
